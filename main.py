@@ -6,6 +6,8 @@ import random
 import pygame
 import sys
 from pygame.locals import *
+from os import listdir
+from os.path import isfile, join
 
 width = 15
 height = 15
@@ -14,6 +16,9 @@ pxl_height = 1000
 settings = open("settings.txt","r")
 color = [0,0,0]
 font = ""
+texturepack = "default"
+texturepackslist = [f for f in listdir("texturepacks") if not isfile(join("texturepacks", f))]
+
 
 for i in range(sum(1 for line in open('settings.txt'))):
     exec(settings.readline())
@@ -22,7 +27,8 @@ pygame.init()
 screen = pygame.display.set_mode((pxl_width,pxl_height), RESIZABLE)
 clock = pygame.time.Clock()
 pygame.display.set_caption("Labyrinth")
-kitty = pygame.image.load("texturepacks/default/kitty.png")
+kitty = pygame.image.load("texturepacks/"+texturepack+"/kitty.png")
+wall = pygame.image.load("texturepacks/"+texturepack+"/wall.png")
 x = (width/2-0.5) * pxl_width/width
 y = (height/2-1.5) * pxl_height/height
 richtung = 0
@@ -221,7 +227,7 @@ l = generate(width, height)
 
 blabla = 0
 
-
+pausewru = "main"
 
 
 while True:
@@ -240,6 +246,7 @@ while True:
             if event.key == pygame.K_ESCAPE and whereru == "play" and blabla > 10:
                 whereru = "pause"
                 blabla = 0
+                pausewru = "main"
             if event.key == pygame.K_ESCAPE and whereru == "pause" and blabla > 10:
                 whereru = "play"
                 blabla = 0
@@ -260,7 +267,7 @@ while True:
             col_idx = (j % width) * FB + BreiVer
 
             if l[j] == "w":
-                pygame.draw.rect(screen, (0,0,0), (col_idx, row_idx, FB, FB))
+                screen.blit(pygame.transform.scale(wall,(FB,FB)),(col_idx,row_idx))
                 #print(col_idx, row_idx)
             if l[j] == "p":
                 pygame.draw.rect(screen, (0,0,255), (col_idx, row_idx, FB, FB))
@@ -271,9 +278,42 @@ while True:
 
 
     if whereru == "pause":
-        button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play')",100)
+        if pausewru == "main":
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",100)
+            button(pxl_width/2-500/2,pxl_height-pxl_height/2,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Textures","global pausewru;pausewru = 'textures'",100)
 
+        if pausewru == "textures":
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",100)
+            texturepackslist = [f for f in listdir("texturepacks") if not isfile(join("texturepacks", f))]
+            for i in range(len(texturepackslist)):
+                if texturepackslist[i] == texturepack:
+                    button(min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500) + 10, i * (
+                        min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500)) + i * 10, 500,
+                           100,
+                           (0,0,200), (color[0], color[1], color[2]), font,
+                           texturepackslist[i],
+                           "global texturepack;texturepack = '" + texturepackslist[i] + "'", 50)
+                else:
+                    button(min(pxl_height/len(texturepackslist)-pxl_height/5-10,pxl_width-500)+10, i*(min(pxl_height/len(texturepackslist)-pxl_height/5-10,pxl_width-500))+i*10, 500, 100,
+                           (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, texturepackslist[i],
+                           "global texturepack;texturepack = '"+texturepackslist[i]+"'", 50)
+                screen.blit(
+                    pygame.transform.scale(pygame.image.load("texturepacks/" + texturepackslist[i] + "/logo.png"), (
+                    min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500),
+                    min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500))),
+                    (0, i * (min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500)) + i * 10))
+
+            kitty = pygame.image.load("texturepacks/" + texturepack + "/kitty.png")
+            wall = pygame.image.load("texturepacks/" + texturepack + "/wall.png")
+            file = open("settings.txt", "r")
+            settingstext = file.read()
+            for i in range(5):
+                altestexturepack = file.readline()
+            if texturepack != altestexturepack[14:]:
+                file = open("settings.txt", "w")
+                file.write(settingstext[:78]+'"'+texturepack+'"')
     pxl_width, pxl_height = pygame.display.get_surface().get_size()
+
 
 
     if old_width != pxl_width or old_height != pxl_height:
