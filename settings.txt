@@ -1,0 +1,4 @@
+color[0] = 200
+color[1] = 200
+color[2] = 200
+font = "Helvetica"
