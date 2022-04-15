@@ -1,7 +1,3 @@
-# This is a sample Python script.
-
-# Press ⇧F10 to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 import random
 import pygame
 import sys
@@ -124,9 +120,10 @@ def button(x,y,width,height,colorbox,colortext,font,text,action,size):
         exec(action)
 
 def reset():
-    global l,x,y,hearts,fish,feld,relgeschwindigkeit,fat
-    relgeschwindigkeit = 0.000025
+    global l,x,y,hearts,fish,feld,relgeschwindigkeit,fat,whereru
+    relgeschwindigkeit = 0.00025
     fat = 0
+    whereru = "play"
     l = generate(width, height)
     x = (width / 2 - 0.5) * pxl_width / width + FB // 2
     fish = []
@@ -146,7 +143,6 @@ def reset():
 
         if l[j] == "w":
             screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
-            # print(col_idx, row_idx)
         if l[j] == "p":
             pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
             screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
@@ -171,7 +167,6 @@ def neue_richtung():
     # prozent für drei richtungen
     elif 90 <= num:
         richtung = richtungen[3]
-    #print('richtung: ', richtung)
 
     return richtung
 
@@ -278,8 +273,8 @@ def generate(width, hight):
 yourtime = 0
 def player():
     global richtung,y,x,hearts,l,whereru,relgeschwindigkeit,fat
-    xgeschw = (pxl_width-2*BreiVer)*relgeschwindigkeit
-    ygeschw = (pxl_height-2*HohVer)*relgeschwindigkeit
+    xgeschw = (pxl_width-2*BreiVer)*relgeschwindigkeit/(int(clock.get_fps())+1)
+    ygeschw = (pxl_height-2*HohVer)*relgeschwindigkeit/(int(clock.get_fps())+1)
     fastrichtung = 0
     anzahlrichtungen = 0
     key = pygame.key.get_pressed()
