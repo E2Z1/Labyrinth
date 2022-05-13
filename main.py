@@ -1,3 +1,7 @@
+# This is a sample Python script.
+
+# Press ⇧F10 to execute it or replace it with your code.
+# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 import random
 import pygame
 import sys
@@ -6,6 +10,7 @@ from os import listdir
 from os.path import isfile, join
 import time
 
+max_fps = 10000000000
 width = 15
 height = 15
 pxl_width = 1000
@@ -82,8 +87,7 @@ def textures():
         deadf = pygame.image.load("texturepacks/"+texturepack+"/fish_dead.png")
     except:
         deadf = pygame.image.load("texturepacks/default/fish_dead.png")
-x = (width / 2 - 0.5) * pxl_width / width + FB // 2
-y = (height / 2 - 1.5) * pxl_height / height + FB + FB // 2
+
 hearts = 7
 
 richtung = 0
@@ -120,35 +124,30 @@ def button(x,y,width,height,colorbox,colortext,font,text,action,size):
         exec(action)
 
 def reset():
-    global l,x,y,hearts,fish,feld,relgeschwindigkeit,fat,whereru
-    relgeschwindigkeit = 0.00025
+    global l,x,y,hearts,fish,feld,fat,geschw
     fat = 0
-    whereru = "play"
     l = generate(width, height)
-    x = (width / 2 - 0.5) * pxl_width / width + FB // 2
+    geschw = 0.03
+    x = width // 2 + 0.5
     fish = []
-    for i in range(min(l.count("p"), 5)):
-        go = True
-        while go:
-            feld = random.randint(0, width * height-1)
-            if l[feld] == "p" and fish.count(feld) == 0:
-                fish.append(feld)
-                go = False
-    y = (height / 2 - 1.5) * pxl_height / height + FB + FB // 2
+    y = height // 2 +0.5
     hearts = 7
     speedruntimer.start()
-    for j in range(len(l)):
-        row_idx = (j // width) * FB + HohVer
-        col_idx = (j % width) * FB + BreiVer
+    paths = 0
+    for i in l:
+        if i[0] == "p":
+            paths += 1
 
-        if l[j] == "w":
-            screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
-        if l[j] == "p":
-            pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
-            screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
+    for i in range(min(paths, 5)):
+        go = True
+        while go:
+            feld = random.randint(0, width * height - 1)
+            if l[feld][0] == "p" and fish.count(feld) == 0:
+                fish.append(feld)
+                go = False
 
-        if l[j] == "e":
-            pygame.draw.rect(screen, (123, 92, 19), (col_idx, row_idx, FB, FB))
+
+
 
 def neue_richtung():
     # willkürliche permutation aus den 4 himmelsrichtungen. osten, sueden, westen, norden
@@ -167,6 +166,7 @@ def neue_richtung():
     # prozent für drei richtungen
     elif 90 <= num:
         richtung = richtungen[3]
+    #print('richtung: ', richtung)
 
     return richtung
 
@@ -176,76 +176,78 @@ def generate(width, hight):
     lab = ['e'] * width * hight
 
     start = len(lab) // 2 + (width // 2 * (len(lab) % 2 == 0))
-    lab[start] = 'p'
+    lab[start] = 'pu'
 
-
+    verbotene_richtungen = []
     cur = start
     path_fields = []
     richtung = neue_richtung()
 
-    for _ in range(500):
+    cnt = 0
+    for _ in range(1000):
 
         # pfade bauen
-        if doeselementinlistexist(lab,cur+1) and richtung == 'o' and lab[cur+1] == 'e':
-            lab[cur+1] = 'p'
+        # nach osten und frei? und wand?
+        if doeselementinlistexist(lab,cur+1) and richtung == 'o' and lab[cur+1] == 'e' and (cur+1) % width != 0:
+            lab[cur+1] = 'p' + str(cnt)
             path_fields.append(cur+1)
             if doeselementinlistexist(lab,cur-1) and cur-1 >=0 and lab[cur-1] == 'e':
-                lab[cur-1] = 'w'
+                lab[cur-1] = 'w' + str(cnt)
             if doeselementinlistexist(lab,cur-width-1) and cur -width -1 >=0 and lab[cur -width -1] == 'e':
-                lab[cur -width -1] = 'w'
+                lab[cur -width -1] = 'w' + str(cnt)
             if doeselementinlistexist(lab,cur+width-1) and cur +width -1 >=0 and lab[cur +width -1] == 'e':
-                lab[cur +width -1] = 'w'
-
-        elif doeselementinlistexist(lab,cur-width) and richtung == 's' and lab[cur -width] == 'e':
-            lab[cur -width] = 'p'
-            path_fields.append(cur -width)
-            if doeselementinlistexist(lab,cur+width-1) and cur +width -1 >=0 and lab[cur +width -1] == 'e':
-                lab[cur +width -1] = 'w'
-            if doeselementinlistexist(lab,cur+width) and cur +width >=0 and lab[cur +width] == 'e':
-                lab[cur +width] = 'w'
-            if doeselementinlistexist(lab,cur+width+1) and cur +width +1 >=0 and lab[cur +width +1] == 'e':
-                lab[cur +width +1] = 'w'
-
-        elif doeselementinlistexist(lab,cur-1) and richtung == 'w' and lab[cur -1] == 'e':
-            lab[cur -1] = 'p'
+                lab[cur +width -1] = 'w' + str(cnt)
+            verbotene_richtungen = []
+        # nach sueden
+        elif doeselementinlistexist(lab,cur+width) and richtung == 's' and lab[cur -width] == 'e' and (cur // width) < height:
+            lab[cur +width] = 'p' + str(cnt)
+            path_fields.append(cur +width)
+            if doeselementinlistexist(lab,cur-width-1) and cur -width -1 >=0 and lab[cur -width -1] == 'e':
+                lab[cur -width -1] = 'w' + str(cnt)
+            if doeselementinlistexist(lab,cur-width) and cur -width >=0 and lab[cur -width] == 'e':
+                lab[cur -width] = 'w' + str(cnt)
+            if doeselementinlistexist(lab,cur-width+1) and cur -width +1 >=0 and lab[cur -width +1] == 'e':
+                lab[cur -width +1] = 'w' + str(cnt)
+            verbotene_richtungen = []
+        # nach westen
+        elif doeselementinlistexist(lab,cur-1) and richtung == 'w' and lab[cur -1] == 'e' and (cur-1) % width != width-1:
+            lab[cur -1] = 'p' + str(cnt)
             path_fields.append(cur -1)
             if doeselementinlistexist(lab,cur+1) and cur+1 < len(lab) and lab[cur+1] == 'e':
-                lab[cur+1] = 'w'
+                lab[cur+1] = 'w' + str(cnt)
             if doeselementinlistexist(lab,cur-width+1) and cur -width +1 >=0 and lab[cur -width +1] == 'e':
-                lab[cur -width +1] = 'w'
+                lab[cur -width +1] = 'w' + str(cnt)
             if doeselementinlistexist(lab,cur+width+1) and cur +width +1 >=0 and lab[cur +width +1] == 'e':
-                lab[cur +width +1] = 'w'
+                lab[cur +width +1] = 'w' + str(cnt)
+            verbotene_richtungen = []
+        # nach norden
+        elif doeselementinlistexist(lab,cur-width) and richtung == 'n' and lab[cur -width] == 'e' and cur // width > 0:
+            lab[cur -width] = 'p' + str(cnt)
+            path_fields.append(cur -width)
+            if cur +width -1 >=0 and lab[cur +width -1] == 'e':
+                lab[cur +width -1] = 'w' + str(cnt)
+            if cur +width >=0 and lab[cur +width] == 'e':
+                lab[cur +width] = 'w' + str(cnt)
+            if cur +width +1 >=0 and lab[cur +width +1] == 'e':
+                lab[cur +width +1] = 'w' + str(cnt)
+            verbotene_richtungen = []
+        # testet nur auf empty, nicht ob eine wall oder path vorliegt
 
-        elif doeselementinlistexist(lab,cur+width) and richtung == 'n' and lab[cur +width] == 'e':
-            lab[cur +width] = 'p'
-            path_fields.append(cur +width)
-            if cur -width -1 >=0 and lab[cur -width -1] == 'e':
-                lab[cur -width -1] = 'w'
-            if cur -width >=0 and lab[cur -width] == 'e':
-                lab[cur -width] = 'w'
-            if cur -width +1 >=0 and lab[cur -width +1] == 'e':
-                lab[cur -width +1] = 'w'
 
-    # wo kein path und keine wall, wall bauen
-        '''if cur-1 >=0 and lab[cur-1] == 'e':
-            lab[cur-1] = 'w'
-        if cur+1 < len(lab) and lab[cur+1] == 'e':
-            lab[cur+1] = 'w'
-        if cur -width -1 >=0 and lab[cur -width -1] == 'e':
-            lab[cur -width -1] = 'w'
-        if cur -width >=0 and lab[cur -width] == 'e':
-            lab[cur -width] = 'w'
-        if cur -width +1 >=0 and lab[cur -width +1] == 'e':
-            lab[cur -width +1] = 'w'
+        # wenn p auf w stoesst, dann neue richtung
 
-        if cur +width -1 >=0 and lab[cur +width -1] == 'e':
-            lab[cur +width -1] = 'w'
-        if cur +width >=0 and lab[cur +width] == 'e':
-            lab[cur +width] = 'w'
-        if cur +width +1 >=0 and lab[cur +width +1] == 'e':
-            lab[cur +width +1] = 'w'
-        '''
+
+
+        elif verbotene_richtungen.count(richtung) == 0:
+            verbotene_richtungen.append(richtung)
+
+        cnt += 1
+        if len(verbotene_richtungen) == 4:
+            break
         richtung = neue_richtung()
+        while verbotene_richtungen.count(richtung) != 0:
+            richtung = neue_richtung()
+
         if path_fields:
             cur = path_fields[0]
             path_fields.pop(0)
@@ -262,82 +264,67 @@ def generate(width, hight):
     # lab[28] = "p"
     # print(lab)
 
-    row = 0
+    #row = 0
     #for i in range(int(len(lab) / width)):
-     #   print(lab[row:row+width])
-      #  row += width
+    #    print(lab[row:row+width])
+    #    row += width
 
     return lab
 
 
 yourtime = 0
 def player():
-    global richtung,y,x,hearts,l,whereru,relgeschwindigkeit,fat
-    xgeschw = (pxl_width-2*BreiVer)*relgeschwindigkeit/(int(clock.get_fps())+1)
-    ygeschw = (pxl_height-2*HohVer)*relgeschwindigkeit/(int(clock.get_fps())+1)
+    global richtung,y,x,hearts,l,whereru,fat,geschw
     fastrichtung = 0
     anzahlrichtungen = 0
     key = pygame.key.get_pressed()
-    screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90),(x-(FB+fat*3)//2,y-FB//2))
-    #zu nach vorne gehen        and not l[int(((y-HohVer)//height-1)*width+(x+BreiVer)//width)] == "w"
-    if key[pygame.K_w] and y-HohVer > 0:
+    screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90),(x*FB+BreiVer-(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90).get_width())//2,y*FB+HohVer-(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90).get_height())/2))
+    if key[pygame.K_w] and y >= 0:
         fastrichtung += 0
         anzahlrichtungen += 1
-        y -= ygeschw
-        # and not l[int((y-HohVer)//FB*width+(x-BreiVer)//FB)-width-1] == "w"
-    if key[pygame.K_a] and x-BreiVer > 0:
+        y -= geschw*60/(clock.get_fps()+0.00000001)
+    if key[pygame.K_a] and x >= 0:
         fastrichtung += 1
         anzahlrichtungen += 1
-        x -= xgeschw
-        # and not l[int((y-HohVer)//FB*width+(x-BreiVer)//FB)-width] == "w"
-    if key[pygame.K_s] and y+FB//2+HohVer < pxl_height:
+        x -= geschw*60/(clock.get_fps()+0.00000001)
+    if key[pygame.K_s] and y < height:
         fastrichtung += 2
         anzahlrichtungen += 1
-        y += ygeschw
-        # and not l[int((y - HohVer) // FB * width + (x - BreiVer) // FB) - width + 1] == "w"
-    if key[pygame.K_d] and x+FB//2+BreiVer < pxl_width:
+        y += geschw*60/(clock.get_fps()+0.00000001)
+    if key[pygame.K_d] and x < width:
         fastrichtung += 3
         anzahlrichtungen += 1
-        x += xgeschw
+        x += geschw*60/(clock.get_fps()+0.00000001)
     if anzahlrichtungen != 0:
         richtung = fastrichtung/anzahlrichtungen
-
-    if l[int((y - HohVer) // FB * width + (x - BreiVer) // FB)] == "w":
+    if l[int(x)+int(y)*height][0] == "w":
         hearts -= 1
-        x = (width / 2 - 0.5) * pxl_width / width + FB // 2
-        y = (height / 2 - 1.5) * pxl_height / height + FB + FB // 2
+        x = width // 2 + 0.5
+        y = height // 2 +0.5
     if hearts < 1:
         reset()
-    if doeselementinlistexist(fish,0):
-        if fish[0] == int((y - HohVer) // FB * width + (x - BreiVer) // FB):
+    if doeselementinlistexist(fish, 0):
+        if fish[0] == int(x)+int(y)*height:
             fish.pop(0)
-            relgeschwindigkeit -= 0.000002
+            geschw -= 0.003
             fat += 3
             if hearts < 9:
                 hearts += 1
     else:
         if len(fish) == 0:
             whereru = "win"
-    pygame.draw.circle(screen,(255,255,255),(x,y),5)
+
+    pygame.draw.circle(screen,(255,255,255),(x*FB+BreiVer,y*FB+HohVer),5)
 
 
 
 
 
-l = generate(width, height)
-speedruntimer.start()
-fish = []
-for i in range(min(l.count("p"),5)):
-
-    go = True
-    while go:
-        feld = random.randint(0,width*height-1)
-        if l[feld] == "p" and fish.count(feld) == 0:
-            fish.append(feld)
-            go = False
 
 
-blabla = 0
+
+
+timebetweenpauseandplay = 0
 
 pausewru = "main"
 
@@ -349,7 +336,9 @@ reset()
 
 
 while True:
-    print(str(int(clock.get_fps())))
+    #print(str(int(clock.get_fps())))
+    global x,y
+
     mouse = 0
     tick += 1
     pxl_width, pxl_height = pygame.display.get_surface().get_size()
@@ -370,35 +359,27 @@ while True:
             fishmodel = 1
         else:
             fishmodel = 0
-    #relx = pxl_width / x
-    #rely = pxl_height / y
+
     screen.fill((color[0], color[1], color[2]))
+    screen.blit(pygame.font.SysFont(font, 50).render(str(clock.get_fps()), True,
+                                                     (255 - color[0], 255 - color[1], 255 - color[2])), (
+                pxl_width - pygame.font.SysFont(font, 50).render(str(int(clock.get_fps())), True, (
+                255 - color[0], 255 - color[1], 255 - color[2])).get_width(), FB // 2 + 10))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
                 reset()
-            if event.key == pygame.K_ESCAPE and whereru == "play" and blabla > 10:
+            if event.key == pygame.K_ESCAPE and whereru == "play" and timebetweenpauseandplay > 10:
                 whereru = "pause"
-                blabla = 0
+                timebetweenpauseandplay = 0
                 pausewru = "main"
-            if event.key == pygame.K_ESCAPE and whereru == "pause" and blabla > 10:
+            if event.key == pygame.K_ESCAPE and whereru == "pause" and timebetweenpauseandplay > 10:
                 whereru = "play"
-                blabla = 0
-                for j in range(len(l)):
-                    row_idx = (j // width) * FB + HohVer
-                    col_idx = (j % width) * FB + BreiVer
+                timebetweenpauseandplay = 0
 
-                    if l[j] == "w":
-                        screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
-                        # print(col_idx, row_idx)
-                    if l[j] == "p":
-                        pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
-                        screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
-
-                    if l[j] == "e":
-                        pygame.draw.rect(screen, (123, 92, 19), (col_idx, row_idx, FB, FB))
             if event.key == pygame.K_LCTRL:
                 sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -406,47 +387,68 @@ while True:
 
     if whereru == "play":
         yourtime = speedruntimer.gettime()
+        pygame.mouse.set_visible(False)
+        pygame.mouse.set_pos(pxl_width//2, pxl_height//2)
 
         FB = min(pxl_width // width, pxl_height // height)
-
         for j in range(len(l)):
             row_idx = (j // width) * FB + HohVer
             col_idx = (j % width) * FB + BreiVer
+            if legit:
+                if (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
+                    if l[j][0] == "w":
+                        screen.blit(pygame.transform.scale(wall,(FB,FB)),(col_idx,row_idx))
+                        #screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
-            if l[j] == "w":
-                screen.blit(pygame.transform.scale(wall,(FB,FB)),(col_idx,row_idx))
-                #print(col_idx, row_idx)
-            if l[j] == "p":
-                pygame.draw.rect(screen, (0,0,255), (col_idx, row_idx, FB, FB))
-                screen.blit(pygame.transform.scale(path,(FB,FB)),(col_idx,row_idx))
+                        #print(col_idx, row_idx)
+                    if l[j][0] == "p":
+                        pygame.draw.rect(screen, (0,0,255), (col_idx, row_idx, FB, FB))
+                        screen.blit(pygame.transform.scale(path,(FB,FB)),(col_idx,row_idx))
+                        #screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
-            if l[j] == "e":
-                pygame.draw.rect(screen, (123,92,19), (col_idx, row_idx, FB, FB))
+
+                    if l[j] == "e":
+                        pygame.draw.rect(screen, (123,92,19), (col_idx, row_idx, FB, FB))
+                    pygame.draw.circle(screen,(color[0],color[0],color[0]),(x*FB+BreiVer,y*FB+HohVer),4.25*FB,int(2.25*FB))
+            else:
+                if l[j][0] == "w":
+                    screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
+                    # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+
+                    # print(col_idx, row_idx)
+                if l[j][0] == "p":
+                    pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
+                    screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
+                    # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+
+                if l[j] == "e":
+                    pygame.draw.rect(screen, (123, 92, 19), (col_idx, row_idx, FB, FB))
         for j in range(len(l)):
             row_idx = (j // width) * FB + HohVer
             col_idx = (j % width) * FB + BreiVer
             if fish.count(j) != 0:
-                if fish.index(j) == 0:
-                    screen.blit(pygame.transform.scale(glowf[fishmodel],(FB,FB)),(col_idx,row_idx))
+                if legit:
+                    if fish.index(j) == 0:
+                        if (j % width) < x + 4 and (j % width) > x - 5 and (j // width) < y + 4 and (j //width) > y - 5:
+                            screen.blit(pygame.transform.scale(glowf[fishmodel],(FB,FB)),(col_idx,row_idx))
+                    else:
+                        if (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
+                            screen.blit(pygame.transform.scale(deadf, (FB, FB)), (col_idx, row_idx))
                 else:
-                    screen.blit(pygame.transform.scale(deadf, (FB, FB)), (col_idx, row_idx))
-            player()
-        if legit:
-            pygame.draw.circle(screen,(color[0],color[1],color[2]),(x,y),200,100)
-        for j in range(len(l)):
-            row_idx = (j // width) * FB + HohVer
-            col_idx = (j % width) * FB + BreiVer
-            if fish.count(j) != 0:
-                if fish.index(j) == 0:
-                    screen.blit(pygame.transform.scale(glowf[fishmodel],(FB,FB)),(col_idx,row_idx))
-        if legit:
-            pygame.draw.circle(screen,(0,0,0),(x,y),1000,800)
+                    if fish.index(j) == 0:
+                        screen.blit(pygame.transform.scale(glowf[fishmodel], (FB, FB)), (col_idx, row_idx))
+                    else:
+                        screen.blit(pygame.transform.scale(deadf, (FB, FB)), (col_idx, row_idx))
+        player()
+
+
         screen.blit(pygame.font.SysFont(font, 50).render(str(yourtime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
         for i in range(hearts + 1):
-            screen.blit(pygame.transform.scale(heartimg, (FB // 2, FB // 2)), (pxl_width - i * (FB // 2 + 2), 2))
+            screen.blit(pygame.transform.scale(heartimg, (FB // 2, FB // 2)), (pxl_width - i * (FB // 2 + 2), 0))
         speedruntimer.resume()
 
     if whereru == "pause":
+        pygame.mouse.set_visible(True)
         speedruntimer.pause()
         if pausewru == "main":
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",100)
@@ -486,10 +488,17 @@ while True:
         screen.blit(pygame.font.SysFont(font, 50).render(str(yourtime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
 
 
-        #x = relx * pxl_width
-        #y = rely * pxl_height
+
 
     if whereru == "win":
+        pygame.mouse.set_visible(True)
+        paths = 0
+        for i in l:
+            if i[0] == "p":
+                paths += 1
+
+        for i in range(min(paths, 5)):
+            screen.blit(pygame.transform.scale(glowf[fishmodel], ((pxl_width-20)//5, (pxl_width-20)//5)), ((pxl_width-20)//5*i, (pxl_height-100)//2-(pxl_width-20)//5))
         button(10,
                (pxl_height-100)//2, pxl_width-20, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
@@ -499,7 +508,6 @@ while True:
 
 
     pygame.display.flip()
-    clock.tick(60)
-    blabla += 1
-    relx = pxl_width / x
-    rely = pxl_height / y
+    clock.tick(max_fps)
+    timebetweenpauseandplay += 1
+
