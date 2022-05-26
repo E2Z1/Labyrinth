@@ -3,3 +3,6 @@ color[1] = 200
 color[2] = 200
 font = "Helvetica"
 texturepack = 'default'
+volume = 0.9989795918367347
+sounds = True
+mousecontrol = True

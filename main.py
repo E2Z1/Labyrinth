@@ -12,6 +12,9 @@ showfps = True
 max_fps = 10000000000
 width = 15
 height = 15
+volume = 1
+sounds = True
+mousecontrol = False
 pxl_width = 1000
 pxl_height = 1000
 settings = open("settings.txt","r")
@@ -70,7 +73,7 @@ def switchboolean(b):
         return True
 
 def textures():
-    global kitty,wall,heartimg,path,glowf,deadf
+    global kitty,wall,heartimg,path,glowf,deadf,dog,dogsound,winsound,diesound,damagesound
     try:
         kitty = pygame.image.load("texturepacks/"+texturepack+"/kitty.png")
     except:
@@ -99,6 +102,28 @@ def textures():
         deadf = pygame.image.load("texturepacks/"+texturepack+"/fish_dead.png")
     except:
         deadf = pygame.image.load("texturepacks/default/fish_dead.png")
+
+
+
+
+
+    try:
+        dogsound = pygame.mixer.Sound("texturepacks/"+texturepack+"/audio/dog.wav")
+    except:
+        dogsound = pygame.mixer.Sound("texturepacks/default/audio/dog.wav")
+    try:
+        diesound = pygame.mixer.Sound("texturepacks/"+texturepack+"/audio/die.wav")
+    except:
+        diesound = pygame.mixer.Sound("texturepacks/default/audio/die.wav")
+    try:
+        winsound = pygame.mixer.Sound("texturepacks/"+texturepack+"/audio/win.wav")
+    except:
+        winsound = pygame.mixer.Sound("texturepacks/default/audio/win.wav")
+    try:
+        damagesound = pygame.mixer.Sound("texturepacks/"+texturepack+"/audio/damage.wav")
+    except:
+        damagesound = pygame.mixer.Sound("texturepacks/default/audio/damage.wav")
+
 
 hearts = 7
 
@@ -227,8 +252,7 @@ def generate(width, hight):
     cnt = 0
     for _ in range(1000):
 
-        # pfade bauen
-        # nach osten und frei? und wand?
+
         if doeselementinlistexist(lab,cur+1) and richtung == 'o' and lab[cur+1] == 'e' and (cur+1) % width != 0:
             lab[cur+1] = 'p' + str(cnt)
             path_fields.append(cur+1)
@@ -239,7 +263,6 @@ def generate(width, hight):
             if doeselementinlistexist(lab,cur+width-1) and cur +width -1 >=0 and lab[cur +width -1] == 'e':
                 lab[cur +width -1] = 'w' + str(cnt)
             verbotene_richtungen = []
-        # nach sueden
         elif doeselementinlistexist(lab,cur+width) and richtung == 's' and lab[cur -width] == 'e' and (cur // width) < height:
             lab[cur +width] = 'p' + str(cnt)
             path_fields.append(cur +width)
@@ -250,7 +273,6 @@ def generate(width, hight):
             if doeselementinlistexist(lab,cur-width+1) and cur -width +1 >=0 and lab[cur -width +1] == 'e':
                 lab[cur -width +1] = 'w' + str(cnt)
             verbotene_richtungen = []
-        # nach westen
         elif doeselementinlistexist(lab,cur-1) and richtung == 'w' and lab[cur -1] == 'e' and (cur-1) % width != width-1:
             lab[cur -1] = 'p' + str(cnt)
             path_fields.append(cur -1)
@@ -338,15 +360,18 @@ def player():
     if anzahlrichtungen != 0:
         richtung = fastrichtung/anzahlrichtungen
 
-
-
+    if mousecontrol and pygame.mouse.get_pressed()[0]:
+        x,y = (pygame.mouse.get_pos()[0]-BreiVer)/FB,(pygame.mouse.get_pos()[1]-HohVer)/FB
     screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90),(x*FB+BreiVer-(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90).get_width())//2,y*FB+HohVer-(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90).get_height())/2))
 
 
     if l[int(x)+int(y)*height][0] == "w":
         hearts -= 1
         x, y = startx, starty
+        if hearts > 0:
+            plymusic(damagesound,1,False)
     if hearts < 1:
+        plymusic(diesound,1,False)
         reset()
     if doeselementinlistexist(fish, 0):
         if fish[0] == int(x)+int(y)*height:
@@ -355,13 +380,21 @@ def player():
             fat += 3
             if hearts < 9:
                 hearts += 1
+            plymusic(winsound,1,False)
     else:
         if len(fish) == 0:
             whereru = "win"
 
     pygame.draw.circle(screen,(255,255,255),(x*FB+BreiVer,y*FB+HohVer),5)
+def plymusic(music,channel,loop):
+    pygame.mixer.Channel(1).set_volume(volume*sounds)
 
-
+    #channel 0 ambient
+    #channel 1 else
+    if not loop:
+        pygame.mixer.Channel(channel).play(music)
+    else:
+        pygame.mixer.Channel(channel).play(music,-1)
 
 onslider = 0
 waspressed = False
@@ -378,7 +411,6 @@ tick = 0
 fishmodel = 0
 
 reset()
-
 
 
 
@@ -427,8 +459,9 @@ while True:
 
     if whereru == "play":
         yourtime = speedruntimer.gettime()
-        pygame.mouse.set_visible(False)
-        pygame.mouse.set_pos(pxl_width//2, pxl_height//2)
+        pygame.mouse.set_visible(mousecontrol)
+        if not mousecontrol:
+            pygame.mouse.set_pos(pxl_width//2, pxl_height//2)
 
         FB = min(pxl_width // width, pxl_height // height)
 
@@ -517,10 +550,14 @@ while True:
         speedruntimer.pause()
         if pausewru == "main":
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",100)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Textures","global pausewru;pausewru = 'textures'",100)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Debug","global pausewru;pausewru = 'debug'",100)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.2,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Colors","global pausewru;pausewru = 'colors'",100)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Textures","global pausewru;pausewru = 'textures'",100)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Debug","global pausewru;pausewru = 'debug'",100)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Mousecontrol: "+str(mousecontrol),"global mousecontrol;mousecontrol = switchboolean(mousecontrol)",100)
+            changesettings("mousecontrol",str(mousecontrol))
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Audio","global pausewru;pausewru = 'audio'",100)
         if pausewru == "textures":
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.6,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Colors","global pausewru;pausewru = 'colors'",100)
+
             button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",100)
             texturepackslist = [f for f in listdir("texturepacks") if not isfile(join("texturepacks", f))]
             for i in range(len(texturepackslist)):
@@ -605,6 +642,36 @@ while True:
 
 
 
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",100)
+
+        if pausewru == "audio":
+            pygame.draw.rect(screen,(255 - color[0], 255 - color[1], 255 - color[2]),(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,10),0,4,4,4,4)
+            pygame.draw.circle(screen,(255 - color[0], 255 - color[1], 255 - color[2]), ((volume/1*(pxl_width-20)+(pxl_width/2-(pxl_width-20)//2))-20,pxl_height-pxl_height/1.4+5),20)
+            screen.blit(pygame.font.SysFont(font, 50).render("Volume: "+str(int(volume*100))+"%", True, (255 - color[0], 255 - color[1], 255 - color[2])),((pxl_width-pygame.font.SysFont(font, 60).render("Volume: "+str(int(volume*100))+"%", True, (255 - color[0], 255 - color[1], 255 - color[2])).get_width())//2,pxl_height-pxl_height/1.25))
+
+            m = pygame.mouse
+
+            if not m.get_pressed()[0]:
+                waspressed = False
+            if m.get_pressed()[0]:
+                #wirdgepresst
+                waspressed = True
+                if pxl_height-pxl_height/1.4 < m.get_pos()[1] < pxl_height-pxl_height/1.4+10:
+                    onslider = 4
+
+            if not waspressed:
+                onslider = 0
+
+            #color 0
+            if onslider == 4:
+                if m.get_pos()[0] < pxl_width-26:
+                    volume = (m.get_pos()[0] + pxl_width / 2 - (pxl_width - 20) // 2) / (pxl_width - 20)
+                    changesettings("volume",str((m.get_pos()[0] + pxl_width / 2 - (pxl_width - 20) // 2) / (pxl_width - 20)))
+
+            button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 1.6, pxl_width - 20, 100,
+                   (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+                   "Sounds: " + " " + str(sounds), "global sounds; sounds = switchboolean(sounds)", 100)
+            changesettings("sounds",str(sounds))
             button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",100)
 
         screen.blit(pygame.font.SysFont(font, 50).render(str(yourtime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
