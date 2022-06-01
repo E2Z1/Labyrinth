@@ -1,3 +1,6 @@
+#by E2Z1
+
+
 import random
 import pygame
 import sys
@@ -40,7 +43,7 @@ clock = pygame.time.Clock()
 pygame.display.set_caption("Labyrinth")
 pygame.display.set_allow_screensaver(False)
 pygame.display.set_icon(pygame.image.load("texturepacks/icon.png"))
-legit = False
+legit = True
 
 
 class timer:
@@ -63,6 +66,7 @@ class timer:
 
 
 speedruntimer = timer()
+mousepoweractivated = timer()
 
 def switchboolean(b):
     global legit
@@ -73,7 +77,7 @@ def switchboolean(b):
         return True
 
 def textures():
-    global kitty,wall,heartimg,path,glowf,deadf,dog,dogsound,winsound,diesound,damagesound
+    global kitty,wall,heartimg,path,glowf,deadf,dog,dogsound,winsound,diesound,damagesound,holeimg,mouseimg
     try:
         kitty = pygame.image.load("texturepacks/"+texturepack+"/kitty.png")
     except:
@@ -102,6 +106,15 @@ def textures():
         deadf = pygame.image.load("texturepacks/"+texturepack+"/fish_dead.png")
     except:
         deadf = pygame.image.load("texturepacks/default/fish_dead.png")
+    try:
+        holeimg = pygame.image.load("texturepacks/"+texturepack+"/hole.png")
+    except:
+        holeimg = pygame.image.load("texturepacks/default/hole.png")
+    try:
+        mouseimg = pygame.image.load("texturepacks/"+texturepack+"/mouse.png")
+    except:
+        mouseimg = pygame.image.load("texturepacks/default/mouse.png")
+
 
 
 
@@ -183,10 +196,12 @@ def button(x,y,width,height,colorbox,colortext,font,text,action,size):
 startx = 0
 starty = 0
 def reset():
-    global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,whereru
+    global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,whereru,holes,mice
     fat = 0
     l = generate(width, height)
     geschw = 0.03
+    mousepoweractivated.startpoint = 0
+
     while True:
         startx = random.randint(0,width-1) + 0.5
         starty = random.randint(0,height-1) + 0.5
@@ -213,6 +228,27 @@ def reset():
                 go = False
 
     whereru = "play"
+
+    holes = []
+
+
+    for i in range(min(paths, 3)):
+        go = True
+        while go:
+            feld = random.randint(0, width * height - 1)
+            if l[feld][0] == "p" and fish.count(feld) == 0 and holes.count(feld) == 0:
+                holes.append(feld)
+                go = False
+
+    mice = []
+
+    for i in range(min(paths, 2)):
+        go = True
+        while go:
+            feld = random.randint(0, width * height - 1)
+            if l[feld][0] == "p" and fish.count(feld) == 0 and holes.count(feld) == 0 and mice.count(feld) == 0:
+                mice.append(feld)
+                go = False
 
 
 def neue_richtung():
@@ -337,7 +373,7 @@ def generate(width, hight):
 
 yourtime = 0
 def player():
-    global richtung,y,x,hearts,l,whereru,fat,geschw
+    global richtung,y,x,hearts,l,whereru,fat,geschw,inhole,mousevis,mice
     fastrichtung = 0
     anzahlrichtungen = 0
     key = pygame.key.get_pressed()
@@ -362,8 +398,23 @@ def player():
 
     if mousecontrol and pygame.mouse.get_pressed()[0]:
         x,y = (pygame.mouse.get_pos()[0]-BreiVer)/FB,(pygame.mouse.get_pos()[1]-HohVer)/FB
-    screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90),(x*FB+BreiVer-(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90).get_width())//2,y*FB+HohVer-(pygame.transform.rotate(pygame.transform.scale(kitty,(FB+fat*3,FB)),richtung*90).get_height())/2))
-
+        mousevis = True
+    if not mousecontrol and not inhole:
+        mousevis = False
+    else:
+        mousevis = True
+    if mousepoweractivated.gettime() < 45:
+        screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90),(x*FB+BreiVer-(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90).get_width())//2,y*FB+HohVer-(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90).get_height())/2))
+    else:
+        screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty, (
+        FB + fat * 3,
+        FB)), richtung * 90), (x * FB + BreiVer - (
+            pygame.transform.rotate(pygame.transform.scale(kitty, (FB + fat * 3, FB)), richtung * 90).get_width()) // 2,
+                                                                                y * FB + HohVer - (
+                                                                                    pygame.transform.rotate(
+                                                                                        pygame.transform.scale(kitty, (
+                                                                                        FB + fat * 3, FB)),
+                                                                                        richtung * 90).get_height()) / 2))
 
     if l[int(x)+int(y)*height][0] == "w":
         hearts -= 1
@@ -384,8 +435,18 @@ def player():
     else:
         if len(fish) == 0:
             whereru = "win"
+            #
+    inhole = False
+    for i in range(len(mice)):
+        if doeselementinlistexist(mice,i) and mice[i] == int(x) + int(y) * height:
+            mice.pop(i)
+            plymusic(winsound,1,False)
+            mousepoweractivated.start()
+    for i in holes:
+        if i == int(x)+int(y)*height and mousepoweractivated.gettime() < 45:
+            inhole = True
 
-    pygame.draw.circle(screen,(255,255,255),(x*FB+BreiVer,y*FB+HohVer),5)
+    #pygame.draw.circle(screen,(255,255,255),(x*FB+BreiVer,y*FB+HohVer),5)
 def plymusic(music,channel,loop):
     pygame.mixer.Channel(1).set_volume(volume*sounds)
 
@@ -400,8 +461,7 @@ onslider = 0
 waspressed = False
 
 
-
-
+#unixtime when the mouse power was activated
 
 timebetweenpauseandplay = 0
 
@@ -411,9 +471,8 @@ tick = 0
 fishmodel = 0
 
 reset()
-
-
-
+mousevis = mousecontrol
+inhole = False
 while True:
     #print(str(int(clock.get_fps())))
     global x,y
@@ -459,8 +518,8 @@ while True:
 
     if whereru == "play":
         yourtime = speedruntimer.gettime()
-        pygame.mouse.set_visible(mousecontrol)
-        if not mousecontrol:
+        pygame.mouse.set_visible(mousevis)
+        if not mousevis:
             pygame.mouse.set_pos(pxl_width//2, pxl_height//2)
 
         FB = min(pxl_width // width, pxl_height // height)
@@ -469,6 +528,7 @@ while True:
 
 
         if legit:
+
             for j in range(len(l)):
                 row_idx = (j // width) * FB + HohVer
                 col_idx = (j % width) * FB + BreiVer
@@ -493,6 +553,17 @@ while True:
                 if fish.count(j) != 0:
                     if fish.index(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
                             screen.blit(pygame.transform.scale(deadf, (FB, FB)), (col_idx, row_idx))
+            for j in range(len(l)):
+                row_idx = (j // width) * FB + HohVer
+                col_idx = (j % width) * FB + BreiVer
+                if holes.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
+                        screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+
+            for j in range(len(l)):
+                row_idx = (j // width) * FB + HohVer
+                col_idx = (j % width) * FB + BreiVer
+                if mice.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
+                        screen.blit(pygame.transform.scale(mouseimg, (FB, FB)), (col_idx, row_idx))
 
             pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 4.25 * FB, int(2.25 * FB))
 
@@ -507,6 +578,19 @@ while True:
 
             pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 6 * FB, int(2.25 * FB))
 
+            if inhole:
+                mousecontrol = False
+                for j in range(len(l)):
+                    row_idx = (j // width) * FB + HohVer
+                    col_idx = (j % width) * FB + BreiVer
+                    if holes.count(j) != 0:
+                        screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+
+                mousevis = True
+                if pygame.mouse.get_pressed()[0] and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
+                        (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
+                    x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
+                        (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
 
 
         else:
@@ -535,19 +619,45 @@ while True:
                     else:
                         screen.blit(pygame.transform.scale(deadf, (FB, FB)), (col_idx, row_idx))
 
+            for j in range(len(l)):
+                row_idx = (j // width) * FB + HohVer
+                col_idx = (j % width) * FB + BreiVer
+                if holes.count(j) != 0:
+                        screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+            for j in range(len(l)):
+                row_idx = (j // width) * FB + HohVer
+                col_idx = (j % width) * FB + BreiVer
+                if mice.count(j) != 0:
+                        screen.blit(pygame.transform.scale(mouseimg, (FB, FB)), (col_idx, row_idx))
 
+
+            if inhole:
+                mousecontrol = False
+                for j in range(len(l)):
+                    row_idx = (j // width) * FB + HohVer
+                    col_idx = (j % width) * FB + BreiVer
+                    if holes.count(j) != 0:
+                        screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+
+                mousevis = True
+                if pygame.mouse.get_pressed()[0] and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
+                        (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
+                    x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
+                        (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
 
         player()
+
 
 
         screen.blit(pygame.font.SysFont(font, 50).render(str(yourtime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
         for i in range(hearts + 1):
             screen.blit(pygame.transform.scale(heartimg, (FB // 2, FB // 2)), (pxl_width - i * (FB // 2 + 2), 0))
         speedruntimer.resume()
+        mousepoweractivated.resume()
 
     if whereru == "pause":
         pygame.mouse.set_visible(True)
-        speedruntimer.pause()
+        mousepoweractivated.pause()
         if pausewru == "main":
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",100)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Textures","global pausewru;pausewru = 'textures'",100)
@@ -612,7 +722,7 @@ while True:
 
             if not m.get_pressed()[0]:
                 waspressed = False
-            if m.get_pressed()[0]:
+            if m.get_pressed()[0] and onslider == 0:
                 #wirdgepresst
                 waspressed = True
                 if pxl_height-pxl_height/2.9 < m.get_pos()[1] < pxl_height-pxl_height/2.9+10:
@@ -656,7 +766,7 @@ while True:
             if m.get_pressed()[0]:
                 #wirdgepresst
                 waspressed = True
-                if pxl_height-pxl_height/1.4 < m.get_pos()[1] < pxl_height-pxl_height/1.4+10:
+                if pxl_height-pxl_height/1.4 < m.get_pos()[1] < pxl_height-pxl_height/1.4+10 and onslider == 0:
                     onslider = 4
 
             if not waspressed:
