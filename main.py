@@ -8,18 +8,23 @@ from pygame.locals import *
 from os import listdir
 from os.path import isfile, join
 import time
+from pathfinding.core.grid import Grid
+from pathfinding.finder.a_star import AStarFinder
 
 import maze
 
+
+howmanydogs = 3
 showfps = True
 max_fps = 10000000000
 width = 15
+zoom = False
 height = 15
 volume = 1
 sounds = True
 mousecontrol = False
-pxl_width = 1000
-pxl_height = 1000
+pxl_width = 800
+pxl_height = 800
 settings = open("settings.txt","r")
 color = [0,0,0]
 font = ""
@@ -50,19 +55,104 @@ class timer:
     def __init__(self):
         self.startpoint = time.time()
         self.ispause = False
-        self.startofpause = time.time()
     def start(self):
         self.startpoint = time.time()
     def gettime(self):
         return time.time()-self.startpoint
     def pause(self):
         if not self.ispause:
-            self.startofpause = time.time()
+            self.timeofpause = self.gettime()
             self.ispause = True
     def resume(self):
         if self.ispause:
-            self.startpoint += time.time()-self.startofpause
+            self.startpoint = time.time()-self.timeofpause
             self.ispause = False
+
+class dog:
+    def __init__(self):
+        matrixl = []
+        self.richtung = 0
+        row = 0
+        self.anzahlrichtungen = 0
+        self.fastrichtung = 0
+        for i in range(int(len(l) / width)):
+            matrixl.append(l[row:row + width])
+            row += width
+        for i in range(len(matrixl)):
+            for j in range(len(matrixl[i])):
+                matrixl[i][j] = 0 if matrixl[i][j] == "w" else 1
+
+        grid = Grid(matrix=matrixl)
+        while True:
+            self.x = random.randint(0, width - 1) + 0.5
+            self.y = random.randint(0, height - 1) + 0.5
+            if l[int(self.x) + int(self.y) * height][0] == "p" and abs(self.x-x) > 4 and abs(self.y-y) > 4:
+                break
+        self.start = grid.node(int(self.x), int(self.y))
+        self.end = grid.node(int(x), int(y))
+        self.path = []
+    def pathfind(self):
+        matrixl = []
+        row = 0
+        for i in range(int(len(l) / width)):
+            matrixl.append(l[row:row + width])
+            row += width
+        for i in range(len(matrixl)):
+            for j in range(len(matrixl[i])):
+                matrixl[i][j] = 0 if matrixl[i][j] == "w" else 1
+        grid = Grid(matrix=matrixl)
+        self.start = grid.node(int(self.x), int(self.y))
+        self.end = grid.node(int(x), int(y))
+        # create a finder with the movement style
+        finder = AStarFinder()  # can add DiagonalMovement as argument here with never or always + more
+
+        # returns a list with the path and the amount of times the finder had to run to get the path
+        self.path, _ = finder.find_path(self.start, self.end, grid)
+    def run(self):
+        if mousepoweractivated.gettime() > 45:
+
+            geschw = 0.01
+
+
+            if int(self.x) == int(x) and int(self.y) == int(y):
+                damage()
+                return True
+
+
+            self.fastrichtung = 0
+            self.anzahlrichtungen = 0
+            if int(self.x) < int(self.path[0][0]):
+                self.fastrichtung += 3
+                self.anzahlrichtungen += 1
+                self.x += geschw * 60 / (clock.get_fps() + 0.00000001)
+            if int(self.x) > int(self.path[0][0]):
+
+                self.fastrichtung += 1
+                self.anzahlrichtungen += 1
+                self.x -= geschw * 60 / (clock.get_fps() + 0.00000001)
+            if int(self.y) < int(self.path[0][1]):
+
+                self.fastrichtung += 2
+                self.anzahlrichtungen += 1
+                self.y += geschw * 60 / (clock.get_fps() + 0.00000001)
+            if int(self.y) > int(self.path[0][1]):
+
+                self.fastrichtung += 0
+                self.anzahlrichtungen += 1
+                self.y -= geschw * 60 / (clock.get_fps() + 0.00000001)
+            if int(self.y) == int(self.path[0][1]) and int(self.x) == int(self.path[0][0]):
+                self.path.pop(0)
+            if self.anzahlrichtungen != 0:
+                self.richtung = self.fastrichtung/self.anzahlrichtungen
+
+    def draw(self):
+        screen.blit(pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), self.richtung * 90),
+                    (self.x * FB +
+                     BreiVer - (pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)),
+                                                        self.richtung * 90).get_width()) // 2,
+                     self.y * FB + HohVer - (
+                         pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), self.richtung * 90)
+                         .get_height()) / 2))
 
 
 speedruntimer = timer()
@@ -77,15 +167,15 @@ def switchboolean(b):
         return True
 
 def textures():
-    global kitty,wall,heartimg,path,glowf,deadf,dog,dogsound,winsound,diesound,damagesound,holeimg,mouseimg
+    global kitty,wall,heartimg,path,glowf,deadf,dogimg,dogsound,winsound,diesound,damagesound,holeimg,mouseimg
     try:
         kitty = pygame.image.load("texturepacks/"+texturepack+"/kitty.png")
     except:
         kitty = pygame.image.load("texturepacks/default/kitty.png")
     try:
-        dog = pygame.image.load("texturepacks/"+texturepack+"/dog.png")
+        dogimg = pygame.image.load("texturepacks/"+texturepack+"/dog.png")
     except:
-        dog = pygame.image.load("texturepacks/default/dog.png")
+        dogimg = pygame.image.load("texturepacks/default/dog.png")
     try:
         wall = pygame.image.load("texturepacks/"+texturepack+"/wall.png")
     except:
@@ -174,8 +264,7 @@ def changesettings(key,inhalt):
                 if settingsall[i][j] == key[j]:
                     dings += 1
             if dings == len(key):
-                finalline = key+" = "
-                finalline += inhalt
+                finalline = key + " = " + inhalt
                 settingsall[i] = finalline
         except:
             pass
@@ -189,14 +278,14 @@ def changesettings(key,inhalt):
 
 def button(x,y,width,height,colorbox,colortext,font,text,action,size):
     writething = pygame.font.SysFont(font,size).render(text,True,colortext)
-    pygame.draw.rect(screen,colorbox,(x,y,width,height))
+    pygame.draw.rect(screen,colorbox,(x,y,width,height),0,4,4,4,4)
     screen.blit(writething,(x+(width - writething.get_width())//2,y+(height - writething.get_height())//2))
     if x+width > pygame.mouse.get_pos()[0] > x and y+height > pygame.mouse.get_pos()[1] > y and mouse == 1:
         exec(action)
 startx = 0
 starty = 0
 def reset():
-    global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,whereru,holes,mice
+    global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,holes,mice,dogs,whereru,howmanydogs
     fat = 0
     l = generate(width, height)
     geschw = 0.03
@@ -227,7 +316,6 @@ def reset():
                 fish.append(feld)
                 go = False
 
-    whereru = "play"
 
     holes = []
 
@@ -249,6 +337,12 @@ def reset():
             if l[feld][0] == "p" and fish.count(feld) == 0 and holes.count(feld) == 0 and mice.count(feld) == 0:
                 mice.append(feld)
                 go = False
+    dogs = []
+    for _ in range(howmanydogs):
+        dogs.append(dog())
+    for i in dogs:
+        i.pathfind()
+    whereru = "play"
 
 
 def neue_richtung():
@@ -274,6 +368,7 @@ def neue_richtung():
 
 
 def generate(width, hight):
+    return maze.maze(width)
     # e: empty, w: wall, p: path
     lab = ['e'] * width * hight
 
@@ -372,8 +467,9 @@ def generate(width, hight):
 
 
 yourtime = 0
+lastposkitty = (0,0)
 def player():
-    global richtung,y,x,hearts,l,whereru,fat,geschw,inhole,mousevis,mice
+    global richtung,y,x,hearts,l,whereru,fat,geschw,inhole,mousevis,mice,lastposkitty,dogs,finaltime
     fastrichtung = 0
     anzahlrichtungen = 0
     key = pygame.key.get_pressed()
@@ -403,27 +499,47 @@ def player():
         mousevis = False
     else:
         mousevis = True
-    if mousepoweractivated.gettime() < 45:
-        screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90),(x*FB+BreiVer-(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90).get_width())//2,y*FB+HohVer-(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90).get_height())/2))
+    if legit and zoom:
+        if mousepoweractivated.gettime() < 45:
+            screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty, (
+            (ZOOM_FB + fat * 3) * (mousepoweractivated.gettime() / 45), ZOOM_FB * (mousepoweractivated.gettime() / 45))),
+                                                richtung * 90), (width/2 * ZOOM_FB + BreiVer - (pygame.transform.rotate(
+                pygame.transform.scale(kitty, (
+                (ZOOM_FB + fat * 3) * (mousepoweractivated.gettime() / 45), ZOOM_FB * (mousepoweractivated.gettime() / 45))),
+                richtung * 90).get_width()) // 2, height/2 * ZOOM_FB + HohVer - (pygame.transform.rotate(
+                pygame.transform.scale(kitty, (
+                (ZOOM_FB + fat * 3) * (mousepoweractivated.gettime() / 45), ZOOM_FB * (mousepoweractivated.gettime() / 45))),
+                richtung * 90).get_height()) / 2))
+        else:
+            screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty, (
+                ZOOM_FB + fat * 3,
+                ZOOM_FB)), richtung * 90), (width / 2 * ZOOM_FB + BreiVer - (
+                pygame.transform.rotate(pygame.transform.scale(kitty, (ZOOM_FB + fat * 3, ZOOM_FB)),
+                                        richtung * 90).get_width()) // 2,
+                                       height / 2 * ZOOM_FB + HohVer - (
+                                           pygame.transform.rotate(
+                                               pygame.transform.scale(kitty, (
+                                                   ZOOM_FB + fat * 3, ZOOM_FB)),
+                                               richtung * 90).get_height()) / 2))
+            pygame.draw.circle(screen,(255,255,255),(width/2*FB+BreiVer,height/2*FB+HohVer),15)
     else:
-        screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty, (
-        FB + fat * 3,
-        FB)), richtung * 90), (x * FB + BreiVer - (
-            pygame.transform.rotate(pygame.transform.scale(kitty, (FB + fat * 3, FB)), richtung * 90).get_width()) // 2,
-                                                                                y * FB + HohVer - (
-                                                                                    pygame.transform.rotate(
-                                                                                        pygame.transform.scale(kitty, (
-                                                                                        FB + fat * 3, FB)),
-                                                                                        richtung * 90).get_height()) / 2))
+        if mousepoweractivated.gettime() < 45:
+            screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90),(x*FB+BreiVer-(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90).get_width())//2,y*FB+HohVer-(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90).get_height())/2))
+        else:
+
+            screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty, (
+                FB + fat * 3,
+                FB)), richtung * 90), (x * FB + BreiVer - (
+                pygame.transform.rotate(pygame.transform.scale(kitty, (FB + fat * 3, FB)),
+                                        richtung * 90).get_width()) // 2,
+                                       y * FB + HohVer - (
+                                           pygame.transform.rotate(
+                                               pygame.transform.scale(kitty, (
+                                                   FB + fat * 3, FB)),
+                                               richtung * 90).get_height()) / 2))
 
     if l[int(x)+int(y)*height][0] == "w":
-        hearts -= 1
-        x, y = startx, starty
-        if hearts > 0:
-            plymusic(damagesound,1,False)
-    if hearts < 1:
-        plymusic(diesound,1,False)
-        reset()
+        damage()
     if doeselementinlistexist(fish, 0):
         if fish[0] == int(x)+int(y)*height:
             fish.pop(0)
@@ -435,7 +551,7 @@ def player():
     else:
         if len(fish) == 0:
             whereru = "win"
-            #
+            finaltime = speedruntimer.gettime()
     inhole = False
     for i in range(len(mice)):
         if doeselementinlistexist(mice,i) and mice[i] == int(x) + int(y) * height:
@@ -447,6 +563,10 @@ def player():
             inhole = True
 
     #pygame.draw.circle(screen,(255,255,255),(x*FB+BreiVer,y*FB+HohVer),5)
+    if lastposkitty[0] != int(x) or lastposkitty[1] != int(y):
+        for i in dogs:
+            i.pathfind()
+    lastposkitty = (int(x),int(y))
 def plymusic(music,channel,loop):
     pygame.mixer.Channel(1).set_volume(volume*sounds)
 
@@ -459,7 +579,15 @@ def plymusic(music,channel,loop):
 
 onslider = 0
 waspressed = False
-
+def damage():
+    global x,y,starty,startx,hearts,whereru
+    hearts -= 1
+    x, y = startx, starty
+    if hearts > 0:
+        plymusic(damagesound,1,False)
+    if hearts < 1:
+        plymusic(diesound,1,False)
+        whereru = "deadscreen"
 
 #unixtime when the mouse power was activated
 
@@ -469,6 +597,7 @@ pausewru = "main"
 
 tick = 0
 fishmodel = 0
+
 
 reset()
 mousevis = mousecontrol
@@ -510,6 +639,11 @@ while True:
             if event.key == pygame.K_ESCAPE and whereru == "pause" and timebetweenpauseandplay > 10:
                 whereru = "play"
                 timebetweenpauseandplay = 0
+            if whereru == "showcase":
+                whereru = "win"
+            if whereru == "showcasebcdead":
+                whereru = "deadscreen"
+
 
             if event.key == pygame.K_LCTRL:
                 sys.exit()
@@ -517,80 +651,120 @@ while True:
             mouse = event.button
 
     if whereru == "play":
-        yourtime = speedruntimer.gettime()
+        yourtime = round(speedruntimer.gettime(),2)
         pygame.mouse.set_visible(mousevis)
         if not mousevis:
             pygame.mouse.set_pos(pxl_width//2, pxl_height//2)
 
+
+
+
+
+
         FB = min(pxl_width // width, pxl_height // height)
-
-
-
-
+        ZOOM_FB = min(pxl_width // 5, pxl_height // 5)
         if legit:
+            if zoom:
+                row_idx = 0
+                col_idx = 0
+                for j in range(len(l)):
+                    if (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j // width) > y - 3:
+                        if l[j][0] == "w":
+                            screen.blit(pygame.transform.scale(wall, (ZOOM_FB, ZOOM_FB)), (col_idx*ZOOM_FB+BreiVer, row_idx*ZOOM_FB+HohVer))
+                            col_idx += 1
+                            if col_idx % 5 == 0:
+                                col_idx = 0
+                                row_idx += 1
 
-            for j in range(len(l)):
-                row_idx = (j // width) * FB + HohVer
-                col_idx = (j % width) * FB + BreiVer
-                if (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
-                    if l[j][0] == "w":
-                        screen.blit(pygame.transform.scale(wall,(FB,FB)),(col_idx,row_idx))
-                        #screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+                        if l[j][0] == "p":
+                            #pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
+                            screen.blit(pygame.transform.scale(path, (ZOOM_FB, ZOOM_FB)), (col_idx*ZOOM_FB+BreiVer, row_idx*ZOOM_FB+HohVer))
+                            col_idx += 1
+                            if col_idx % 5 == 0:
+                                col_idx = 0
+                                row_idx += 1
+                            # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
-                        #print(col_idx, row_idx)
-                    if l[j][0] == "p":
-                        pygame.draw.rect(screen, (0,0,255), (col_idx, row_idx, FB, FB))
-                        screen.blit(pygame.transform.scale(path,(FB,FB)),(col_idx,row_idx))
-                        #screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+                        if l[j] == "e":
+                            pygame.draw.rect(screen, (123, 92, 19), (col_idx*ZOOM_FB+BreiVer, row_idx*ZOOM_FB+HohVer, ZOOM_FB, ZOOM_FB))
+                            col_idx += 1
+                            if col_idx % 5 == 0:
+                                col_idx = 0
+                                row_idx += 1
 
 
-                    if l[j] == "e":
-                        pygame.draw.rect(screen, (123,92,19), (col_idx, row_idx, FB, FB))
 
-            for j in range(len(l)):
-                row_idx = (j // width) * FB + HohVer
-                col_idx = (j % width) * FB + BreiVer
-                if fish.count(j) != 0:
-                    if fish.index(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
-                            screen.blit(pygame.transform.scale(deadf, (FB, FB)), (col_idx, row_idx))
-            for j in range(len(l)):
-                row_idx = (j // width) * FB + HohVer
-                col_idx = (j % width) * FB + BreiVer
-                if holes.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
-                        screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
 
-            for j in range(len(l)):
-                row_idx = (j // width) * FB + HohVer
-                col_idx = (j % width) * FB + BreiVer
-                if mice.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
-                        screen.blit(pygame.transform.scale(mouseimg, (FB, FB)), (col_idx, row_idx))
 
-            pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 4.25 * FB, int(2.25 * FB))
 
-            for j in range(len(l)):
-                row_idx = (j // width) * FB + HohVer
-                col_idx = (j % width) * FB + BreiVer
-                if fish.count(j) != 0:
-                    if fish.index(j) == 0:
-                        if (j % width) < x + 4 and (j % width) > x - 5 and (j // width) < y + 4 and (
-                                j // width) > y - 5:
-                            screen.blit(pygame.transform.scale(glowf[fishmodel], (FB, FB)), (col_idx, row_idx))
 
-            pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 6 * FB, int(2.25 * FB))
 
-            if inhole:
-                mousecontrol = False
+            else:
                 for j in range(len(l)):
                     row_idx = (j // width) * FB + HohVer
                     col_idx = (j % width) * FB + BreiVer
-                    if holes.count(j) != 0:
-                        screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+                    if (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
+                        if l[j][0] == "w":
+                            screen.blit(pygame.transform.scale(wall,(FB,FB)),(col_idx,row_idx))
+                            #screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
-                mousevis = True
-                if pygame.mouse.get_pressed()[0] and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
-                        (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
-                    x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
-                        (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
+                            #print(col_idx, row_idx)
+                        if l[j][0] == "p":
+                            pygame.draw.rect(screen, (0,0,255), (col_idx, row_idx, FB, FB))
+                            screen.blit(pygame.transform.scale(path,(FB,FB)),(col_idx,row_idx))
+                            #screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+
+
+                        if l[j] == "e":
+                            pygame.draw.rect(screen, (123,92,19), (col_idx, row_idx, FB, FB))
+
+                for j in range(len(l)):
+                    row_idx = (j // width) * FB + HohVer
+                    col_idx = (j % width) * FB + BreiVer
+                    if fish.count(j) != 0:
+                        if fish.index(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
+                                screen.blit(pygame.transform.scale(deadf, (FB, FB)), (col_idx, row_idx))
+                for j in range(len(l)):
+                    row_idx = (j // width) * FB + HohVer
+                    col_idx = (j % width) * FB + BreiVer
+                    if holes.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
+                            screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+
+                for j in range(len(l)):
+                    row_idx = (j // width) * FB + HohVer
+                    col_idx = (j % width) * FB + BreiVer
+                    if mice.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
+                            screen.blit(pygame.transform.scale(mouseimg, (FB, FB)), (col_idx, row_idx))
+                if yourtime > 10:
+                    for i in dogs:
+                        if abs(i.x-x) < 3 and abs(i.y-y) < 3:
+                            i.draw()
+                pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 4.25 * FB, int(2.25 * FB))
+
+                for j in range(len(l)):
+                    row_idx = (j // width) * FB + HohVer
+                    col_idx = (j % width) * FB + BreiVer
+                    if fish.count(j) != 0:
+                        if fish.index(j) == 0:
+                            if (j % width) < x + 4 and (j % width) > x - 5 and (j // width) < y + 4 and (
+                                    j // width) > y - 5:
+                                screen.blit(pygame.transform.scale(glowf[fishmodel], (FB, FB)), (col_idx, row_idx))
+
+                pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 6 * FB, int(2.25 * FB))
+
+                if inhole:
+                    mousecontrol = False
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if holes.count(j) != 0:
+                            screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+
+                    mousevis = True
+                    if pygame.mouse.get_pressed()[0] and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
+                            (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
+                        x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
+                            (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
 
 
         else:
@@ -644,8 +818,13 @@ while True:
                         (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
                     x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
                         (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
-
+            if yourtime > 10:
+                for i in dogs:
+                    i.draw()
         player()
+        if yourtime > 10:
+            for i in dogs:
+                i.run()
 
 
 
@@ -658,17 +837,19 @@ while True:
     if whereru == "pause":
         pygame.mouse.set_visible(True)
         mousepoweractivated.pause()
-        if pausewru == "main":
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",100)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Textures","global pausewru;pausewru = 'textures'",100)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Debug","global pausewru;pausewru = 'debug'",100)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Mousecontrol: "+str(mousecontrol),"global mousecontrol;mousecontrol = switchboolean(mousecontrol)",100)
-            changesettings("mousecontrol",str(mousecontrol))
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Audio","global pausewru;pausewru = 'audio'",100)
-        if pausewru == "textures":
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.6,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Colors","global pausewru;pausewru = 'colors'",100)
+        speedruntimer.pause()
 
-            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",100)
+        if pausewru == "main":
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Textures","global pausewru;pausewru = 'textures'",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Debug","global pausewru;pausewru = 'debug'",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Zoom: "+str(zoom),"global zoom;zoom = switchboolean(zoom)",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Audio","global pausewru;pausewru = 'audio'",80)
+            changesettings("zoom",str(zoom))
+        if pausewru == "textures":
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.6,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Colors","global pausewru;pausewru = 'colors'",80)
+
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
             texturepackslist = [f for f in listdir("texturepacks") if not isfile(join("texturepacks", f))]
             for i in range(len(texturepackslist)):
                 if texturepackslist[i] == texturepack:
@@ -689,15 +870,17 @@ while True:
                     (0, i * (min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500)) + i * 10))
 
             textures()
-            changesettings("texturepack","'"+texturepack+"'")
+            changesettings("texturepack","'"+texturepack+"'")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   #hi
         if pausewru == "debug":
             button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 2, pxl_width - 20, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
-                   "Legit: " + " " + str(legit), "global legit; legit = switchboolean(legit)", 100)
+                   "Legit: " + " " + str(legit), "global legit; legit = switchboolean(legit)", 80)
             button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 2.9, pxl_width - 20, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
-                   "Show FPS: " + " " + str(showfps), "global showfps; showfps = switchboolean(showfps)", 100)
-            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",100)
+                   "Show FPS: " + " " + str(showfps), "global showfps; showfps = switchboolean(showfps)", 80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Mousecontrol: "+str(mousecontrol),"global mousecontrol;mousecontrol = switchboolean(mousecontrol)",80)
+            changesettings("mousecontrol",str(mousecontrol))
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
         if pausewru == "colors":
             m = pygame.mouse
             #ganz unten
@@ -752,7 +935,7 @@ while True:
 
 
 
-            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",100)
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
 
         if pausewru == "audio":
             pygame.draw.rect(screen,(255 - color[0], 255 - color[1], 255 - color[2]),(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,10),0,4,4,4,4)
@@ -782,11 +965,58 @@ while True:
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
                    "Sounds: " + " " + str(sounds), "global sounds; sounds = switchboolean(sounds)", 100)
             changesettings("sounds",str(sounds))
-            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",100)
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
 
         screen.blit(pygame.font.SysFont(font, 50).render(str(yourtime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
 
+    if whereru == "showcase" or whereru == "showcasebcdead":
+        for j in range(len(l)):
+            row_idx = (j // width) * FB + HohVer
+            col_idx = (j % width) * FB + BreiVer
+            if l[j][0] == "w":
+                screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
+                # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
+                # print(col_idx, row_idx)
+            if l[j][0] == "p":
+                pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
+                screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
+                # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+
+            if l[j] == "e":
+                pygame.draw.rect(screen, (123, 92, 19), (col_idx, row_idx, FB, FB))
+    if whereru == "deadscreen":
+        pygame.mouse.set_visible(True)
+        screen.blit(pygame.font.SysFont(font, 100).render("You died.", True,
+                                                         (255 - color[0], 255 - color[1], 255 - color[2])), ((
+                                                                                                                         pxl_width - pygame.font.SysFont(
+                                                                                                                     font,
+                                                                                                                     100).render(
+                                                                                                                     "You died.",
+                                                                                                                     True,
+                                                                                                                     (
+                                                                                                                     255 -
+                                                                                                                     color[
+                                                                                                                         0],
+                                                                                                                     255 -
+                                                                                                                     color[
+                                                                                                                         1],
+                                                                                                                     255 -
+                                                                                                                     color[
+                                                                                                                         2])).get_width()) // 2,
+                                                                                                             pxl_height - pxl_height / 1.25))
+
+        button(10,
+               (pxl_height - 100) // 2, pxl_width - 20, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+               "New Round",
+               "reset();global whereru;whereru = 'play';speedruntimer.start()", 50)
+
+        button(10,
+               pxl_height // 1.25, pxl_width - 20, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+               "Show Labyrinth",
+               "global whereru;whereru = 'showcasebcdead'", 50)
 
 
     if whereru == "win":
@@ -803,7 +1033,12 @@ while True:
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
                "New Round",
                "reset();global whereru;whereru = 'play';speedruntimer.start()", 50)
-        screen.blit(pygame.font.SysFont(font, 50).render(str(yourtime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
+        button(10,
+               pxl_height // 1.25, pxl_width - 20, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+               "Show Labyrinth",
+               "global whereru;whereru = 'showcase'", 50)
+        screen.blit(pygame.font.SysFont(font, 50).render(str(finaltime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
     if showfps:
         screen.blit(pygame.font.SysFont(font, 50).render(str(clock.get_fps()), True,
                                                      (255 - color[0], 255 - color[1], 255 - color[2])), (
