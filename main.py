@@ -858,7 +858,7 @@ while True:
 
         if pausewru == "main":
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",80)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Textures","global pausewru;pausewru = 'textures'",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Look","global pausewru;pausewru = 'textures'",80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Debug","global pausewru;pausewru = 'debug'",80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Help","webbrowser.open(r'https://e2z1.ml/projects/KittyLabyrinth')",80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Audio","global pausewru;pausewru = 'audio'",80)
