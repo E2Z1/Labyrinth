@@ -4,6 +4,6 @@ color[2] = 200
 font = "Helvetica"
 texturepack = 'fancy'
 volume = 1.0011811023622048
-sounds = True
+sounds = False
 mousecontrol = False
 zoom = False

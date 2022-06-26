@@ -1,4 +1,4 @@
-#by E2Z1
+#by E2Z1   e2z1.ml   https://github.com/E2Z1/
 
 
 import random
@@ -10,6 +10,7 @@ from os.path import isfile, join
 import time
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
+import webbrowser
 
 import maze
 
@@ -103,10 +104,7 @@ class dog:
         grid = Grid(matrix=matrixl)
         self.start = grid.node(int(self.x), int(self.y))
         self.end = grid.node(int(x), int(y))
-        # create a finder with the movement style
-        finder = AStarFinder()  # can add DiagonalMovement as argument here with never or always + more
-
-        # returns a list with the path and the amount of times the finder had to run to get the path
+        finder = AStarFinder()
         self.path, _ = finder.find_path(self.start, self.end, grid)
     def run(self):
         if mousepoweractivated.gettime() > 45:
@@ -121,21 +119,21 @@ class dog:
 
             self.fastrichtung = 0
             self.anzahlrichtungen = 0
-            if int(self.x) < int(self.path[0][0]):
+            if self.x < int(self.path[0][0])+0.475:
                 self.fastrichtung += 3
                 self.anzahlrichtungen += 1
                 self.x += geschw * 60 / (clock.get_fps() + 0.00000001)
-            if int(self.x) > int(self.path[0][0]):
+            if self.x > int(self.path[0][0])+0.525:
 
                 self.fastrichtung += 1
                 self.anzahlrichtungen += 1
                 self.x -= geschw * 60 / (clock.get_fps() + 0.00000001)
-            if int(self.y) < int(self.path[0][1]):
+            if self.y < int(self.path[0][1])+0.475:
 
                 self.fastrichtung += 2
                 self.anzahlrichtungen += 1
                 self.y += geschw * 60 / (clock.get_fps() + 0.00000001)
-            if int(self.y) > int(self.path[0][1]):
+            if self.y > int(self.path[0][1])+0.525:
 
                 self.fastrichtung += 0
                 self.anzahlrichtungen += 1
@@ -153,6 +151,14 @@ class dog:
                      self.y * FB + HohVer - (
                          pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), self.richtung * 90)
                          .get_height()) / 2))
+    def sleep_draw(self):
+        screen.blit(pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)), self.richtung * 90),
+                    (self.x * FB +
+                     BreiVer - (pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)),
+                                                        self.richtung * 90).get_width()) // 2,
+                     self.y * FB + HohVer - (
+                         pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)), self.richtung * 90)
+                         .get_height()) / 2))
 
 
 speedruntimer = timer()
@@ -167,7 +173,7 @@ def switchboolean(b):
         return True
 
 def textures():
-    global kitty,wall,heartimg,path,glowf,deadf,dogimg,dogsound,winsound,diesound,damagesound,holeimg,mouseimg
+    global kitty,wall,heartimg,path,glowf,deadf,dogimg,dogsound,winsound,diesound,damagesound,holeimg,mouseimg,sldogimg
     try:
         kitty = pygame.image.load("texturepacks/"+texturepack+"/kitty.png")
     except:
@@ -176,6 +182,10 @@ def textures():
         dogimg = pygame.image.load("texturepacks/"+texturepack+"/dog.png")
     except:
         dogimg = pygame.image.load("texturepacks/default/dog.png")
+    try:
+        sldogimg = pygame.image.load("texturepacks/"+texturepack+"/sleeping_dog.png")
+    except:
+        sldogimg = pygame.image.load("texturepacks/default/sleeping_dog.png")
     try:
         wall = pygame.image.load("texturepacks/"+texturepack+"/wall.png")
     except:
@@ -739,6 +749,10 @@ while True:
                     for i in dogs:
                         if abs(i.x-x) < 3 and abs(i.y-y) < 3:
                             i.draw()
+                if yourtime < 10:
+                    for i in dogs:
+                        if abs(i.x-x) < 3 and abs(i.y-y) < 3:
+                            i.sleep_draw()
                 pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 4.25 * FB, int(2.25 * FB))
 
                 for j in range(len(l)):
@@ -821,6 +835,9 @@ while True:
             if yourtime > 10:
                 for i in dogs:
                     i.draw()
+            if yourtime < 10:
+                for i in dogs:
+                    i.sleep_draw()
         player()
         if yourtime > 10:
             for i in dogs:
@@ -843,31 +860,31 @@ while True:
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Textures","global pausewru;pausewru = 'textures'",80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Debug","global pausewru;pausewru = 'debug'",80)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Zoom: "+str(zoom),"global zoom;zoom = switchboolean(zoom)",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Help","webbrowser.open(r'https://e2z1.ml/projects/KittyLabyrinth')",80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Audio","global pausewru;pausewru = 'audio'",80)
-            changesettings("zoom",str(zoom))
         if pausewru == "textures":
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.6,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Colors","global pausewru;pausewru = 'colors'",80)
-
+            button(10,pxl_height-pxl_height/2.5,(pxl_width-30)/2,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Colors","global pausewru;pausewru = 'colors'",80)
+            changesettings("zoom",str(zoom))
+            button(20+(pxl_width-30)/2,pxl_height-pxl_height/2.5,(pxl_width-30)/2,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Zoom: "+str(zoom),"global zoom;zoom = switchboolean(zoom)",80)
             button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
             texturepackslist = [f for f in listdir("texturepacks") if not isfile(join("texturepacks", f))]
             for i in range(len(texturepackslist)):
                 if texturepackslist[i] == texturepack:
-                    button(min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500) + 10, i * (
-                        min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500)) + i * 10, 500,
-                           100,
+                    button(pxl_height/2 / len(texturepackslist) + 10, i * (
+                        pxl_height/2 / len(texturepackslist)) + i * 10, 500,
+                           pxl_height/2 / len(texturepackslist),
                            (0,0,200), (color[0], color[1], color[2]), font,
                            texturepackslist[i],
                            "global texturepack;texturepack = '" + texturepackslist[i] + "'", 50)
                 else:
-                    button(min(pxl_height/len(texturepackslist)-pxl_height/5-10,pxl_width-500)+10, i*(min(pxl_height/len(texturepackslist)-pxl_height/5-10,pxl_width-500))+i*10, 500, 100,
+                    button(pxl_height/2 / len(texturepackslist)+10, i*(pxl_height/2 / len(texturepackslist))+i*10, 500, pxl_height/2 / len(texturepackslist),
                            (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, texturepackslist[i],
                            "global texturepack;texturepack = '"+texturepackslist[i]+"'", 50)
                 screen.blit(
                     pygame.transform.scale(pygame.image.load("texturepacks/" + texturepackslist[i] + "/logo.png"), (
-                    min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500),
-                    min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500))),
-                    (0, i * (min(pxl_height / len(texturepackslist) - pxl_height / 5 - 10, pxl_width - 500)) + i * 10))
+                    pxl_height/2 / len(texturepackslist),
+                    pxl_height/2 / len(texturepackslist))),
+                    (0, i * (pxl_height/2 / len(texturepackslist)) + i * 10))
 
             textures()
             changesettings("texturepack","'"+texturepack+"'")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   #hi
