@@ -143,25 +143,65 @@ class dog:
             if self.anzahlrichtungen != 0:
                 self.richtung = self.fastrichtung/self.anzahlrichtungen
 
+
     def draw(self):
-        screen.blit(pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), self.richtung * 90),
-                    (self.x * FB +
+        global zoom,legit
+        if zoom and legit:
+            screen.blit(pygame.transform.rotate(pygame.transform.scale(dogimg, (ZOOM_FB,ZOOM_FB)), self.richtung * 90),
+                        ((2.5 + (self.x - x)) * ZOOM_FB+BreiVer
+                         - (pygame.transform.rotate(pygame.transform.scale(dogimg, (ZOOM_FB, ZOOM_FB)),
+                                                            self.richtung * 90).get_width()) // 2,
+                         (2.5 + (self.y - y)) * ZOOM_FB+HohVer - (
+                             pygame.transform.rotate(pygame.transform.scale(dogimg, (ZOOM_FB, ZOOM_FB)), self.richtung * 90)
+                                 .get_height()) / 2))
+        else:
+            screen.blit(pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), self.richtung * 90),
+                        (self.x * FB +
+                         BreiVer - (pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)),
+                                                            self.richtung * 90).get_width()) // 2,
+                         self.y * FB + HohVer - (
+                             pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), self.richtung * 90)
+                             .get_height()) / 2))
+    def draw_at(self,xdraw,ydraw,richtungdraw):
+        screen.blit(pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), richtungdraw * 90),
+                    (xdraw * FB +
                      BreiVer - (pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)),
-                                                        self.richtung * 90).get_width()) // 2,
-                     self.y * FB + HohVer - (
-                         pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), self.richtung * 90)
-                         .get_height()) / 2))
-    def sleep_draw(self):
-        screen.blit(pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)), self.richtung * 90),
-                    (self.x * FB +
+                                                        richtungdraw * 90).get_width()) // 2,
+                     ydraw * FB + HohVer - (
+                         pygame.transform.rotate(pygame.transform.scale(dogimg, (FB, FB)), richtungdraw * 90)
+                             .get_height()) / 2))
+
+    def sleep_draw_at(self,xdraw,ydraw,richtungdraw):
+        screen.blit(pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)), richtungdraw * 90),
+                    (xdraw * FB +
                      BreiVer - (pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)),
-                                                        self.richtung * 90).get_width()) // 2,
-                     self.y * FB + HohVer - (
-                         pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)), self.richtung * 90)
-                         .get_height()) / 2))
+                                                        richtungdraw * 90).get_width()) // 2,
+                     ydraw * FB + HohVer - (
+                         pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)), richtungdraw * 90)
+                             .get_height()) / 2))
+    def sleep_draw(self):
+        global zoom, legit
+        if zoom and legit:
+            screen.blit(pygame.transform.rotate(pygame.transform.scale(sldogimg, (ZOOM_FB, ZOOM_FB)), self.richtung * 90),
+                        ((2.5 + (self.x - x)) * ZOOM_FB + BreiVer
+                         - (pygame.transform.rotate(pygame.transform.scale(sldogimg, (ZOOM_FB, ZOOM_FB)),
+                                                    self.richtung * 90).get_width()) // 2,
+                         (2.5 + (self.y - y)) * ZOOM_FB + HohVer - (
+                             pygame.transform.rotate(pygame.transform.scale(sldogimg, (ZOOM_FB, ZOOM_FB)),
+                                                     self.richtung * 90)
+                                 .get_height()) / 2))
+        else:
+            screen.blit(pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)), self.richtung * 90),
+                        (self.x * FB +
+                         BreiVer - (pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)),
+                                                            self.richtung * 90).get_width()) // 2,
+                         self.y * FB + HohVer - (
+                             pygame.transform.rotate(pygame.transform.scale(sldogimg, (FB, FB)), self.richtung * 90)
+                             .get_height()) / 2))
 
 
 speedruntimer = timer()
+dogshowtimer = timer()
 mousepoweractivated = timer()
 
 def switchboolean(b):
@@ -295,11 +335,13 @@ def button(x,y,width,height,colorbox,colortext,font,text,action,size):
 startx = 0
 starty = 0
 def reset():
-    global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,holes,mice,dogs,whereru,howmanydogs
+    global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,holes,mice,dogs,whereru,howmanydogs,dogpos,dogrichtungen
     fat = 0
     l = generate(width, height)
     geschw = 0.03
     mousepoweractivated.startpoint = 0
+    dogpos = []
+    dogrichtungen = []
 
     while True:
         startx = random.randint(0,width-1) + 0.5
@@ -313,6 +355,7 @@ def reset():
     fish = []
     hearts = 7
     speedruntimer.start()
+    dogshowtimer.start()
     paths = 0
     for i in l:
         if i[0] == "p":
@@ -372,7 +415,6 @@ def neue_richtung():
     # prozent für drei richtungen
     elif 90 <= num:
         richtung = richtungen[3]
-    #print('richtung: ', richtung)
 
     return richtung
 
@@ -465,13 +507,7 @@ def generate(width, hight):
 
 
 
-    # lab[28] = "p"
-    # print(lab)
 
-    #row = 0
-    #for i in range(int(len(lab) / width)):
-    #    print(lab[row:row+width])
-    #    row += width
 
     return maze.maze(width)
 
@@ -509,29 +545,29 @@ def player():
         mousevis = False
     else:
         mousevis = True
-    if legit and zoom:
+    if legit and zoom and not inhole:
         if mousepoweractivated.gettime() < 45:
             screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty, (
             (ZOOM_FB + fat * 3) * (mousepoweractivated.gettime() / 45), ZOOM_FB * (mousepoweractivated.gettime() / 45))),
-                                                richtung * 90), (width/2 * ZOOM_FB + BreiVer - (pygame.transform.rotate(
+                                                richtung * 90), (2.5 * ZOOM_FB + BreiVer - (pygame.transform.rotate(
                 pygame.transform.scale(kitty, (
                 (ZOOM_FB + fat * 3) * (mousepoweractivated.gettime() / 45), ZOOM_FB * (mousepoweractivated.gettime() / 45))),
-                richtung * 90).get_width()) // 2, height/2 * ZOOM_FB + HohVer - (pygame.transform.rotate(
+                richtung * 90).get_width()) // 2, 2.5 * ZOOM_FB + HohVer - (pygame.transform.rotate(
                 pygame.transform.scale(kitty, (
                 (ZOOM_FB + fat * 3) * (mousepoweractivated.gettime() / 45), ZOOM_FB * (mousepoweractivated.gettime() / 45))),
                 richtung * 90).get_height()) / 2))
         else:
             screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty, (
                 ZOOM_FB + fat * 3,
-                ZOOM_FB)), richtung * 90), (width / 2 * ZOOM_FB + BreiVer - (
+                ZOOM_FB)), richtung * 90), (2.5 * ZOOM_FB + BreiVer - (
                 pygame.transform.rotate(pygame.transform.scale(kitty, (ZOOM_FB + fat * 3, ZOOM_FB)),
                                         richtung * 90).get_width()) // 2,
-                                       height / 2 * ZOOM_FB + HohVer - (
+                                       2.5 * ZOOM_FB + HohVer - (
                                            pygame.transform.rotate(
                                                pygame.transform.scale(kitty, (
                                                    ZOOM_FB + fat * 3, ZOOM_FB)),
-                                               richtung * 90).get_height()) / 2))
-            pygame.draw.circle(screen,(255,255,255),(width/2*FB+BreiVer,height/2*FB+HohVer),15)
+                                               richtung * 90).get_height()) // 2))
+            pygame.draw.circle(screen,(255,255,255),(2.5*ZOOM_FB+BreiVer,2.5*ZOOM_FB+HohVer),10)
     else:
         if mousepoweractivated.gettime() < 45:
             screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90),(x*FB+BreiVer-(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90).get_width())//2,y*FB+HohVer-(pygame.transform.rotate(pygame.transform.scale(kitty,((FB+fat*3)*(mousepoweractivated.gettime()/45),FB*(mousepoweractivated.gettime()/45))),richtung*90).get_height())/2))
@@ -607,13 +643,13 @@ pausewru = "main"
 
 tick = 0
 fishmodel = 0
-
+dogpos = []
+dogrichtungen = []
 
 reset()
 mousevis = mousecontrol
 inhole = False
 while True:
-    #print(str(int(clock.get_fps())))
     global x,y
 
     mouse = 0
@@ -675,38 +711,164 @@ while True:
         ZOOM_FB = min(pxl_width // 5, pxl_height // 5)
         if legit:
             if zoom:
-                row_idx = 0
-                col_idx = 0
-                for j in range(len(l)):
-                    if (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j // width) > y - 3:
-                        if l[j][0] == "w":
-                            screen.blit(pygame.transform.scale(wall, (ZOOM_FB, ZOOM_FB)), (col_idx*ZOOM_FB+BreiVer, row_idx*ZOOM_FB+HohVer))
-                            col_idx += 1
-                            if col_idx % 5 == 0:
-                                col_idx = 0
+                if not inhole:
+                    row_idx = -1
+                    col_idx = -1
+                    for j in range(len(l)):
+                        if (j % width) < x + 3 and (j % width) > x - 4 and (j // width) < y + 3 and (j // width) > y - 4:
+                            if x < 3 and col_idx == -1:
+                                col_idx += 3-int(x)
+                            if width-int(x) == 2 and col_idx == 6-(width-int(x)):
+                                col_idx = -1
                                 row_idx += 1
-
-                        if l[j][0] == "p":
-                            #pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
-                            screen.blit(pygame.transform.scale(path, (ZOOM_FB, ZOOM_FB)), (col_idx*ZOOM_FB+BreiVer, row_idx*ZOOM_FB+HohVer))
-                            col_idx += 1
-                            if col_idx % 5 == 0:
-                                col_idx = 0
+                            if width-int(x) == 3 and col_idx == 5:
+                                col_idx = -1
                                 row_idx += 1
-                            # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+                            if y < 3 and row_idx == -1:
+                                row_idx = 2-int(y)
 
-                        if l[j] == "e":
-                            pygame.draw.rect(screen, (123, 92, 19), (col_idx*ZOOM_FB+BreiVer, row_idx*ZOOM_FB+HohVer, ZOOM_FB, ZOOM_FB))
-                            col_idx += 1
-                            if col_idx % 5 == 0:
-                                col_idx = 0
+                            if l[j][0] == "w":
+                                screen.blit(pygame.transform.scale(wall, (ZOOM_FB, ZOOM_FB)), (col_idx*ZOOM_FB+BreiVer+(int(x)-x+0.5)*ZOOM_FB, row_idx*ZOOM_FB+HohVer+(int(y)-y+0.5)*ZOOM_FB))
+                                col_idx += 1
+
+
+
+                            if l[j][0] == "p":
+                                #pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
+                                screen.blit(pygame.transform.scale(path, (ZOOM_FB, ZOOM_FB)), (col_idx*ZOOM_FB+BreiVer+(int(x)-x+0.5)*ZOOM_FB, row_idx*ZOOM_FB+HohVer+(int(y)-y+0.5)*ZOOM_FB))
+                                col_idx += 1
+                            if col_idx == 6:
+                                col_idx = -1
                                 row_idx += 1
+                                # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+
+                    pygame.draw.rect(screen,color,(0,0,BreiVer,pxl_height))
+                    pygame.draw.rect(screen,color,(pxl_width-BreiVer,0,BreiVer,pxl_height))
+                    pygame.draw.rect(screen, color, (0, 0, pxl_width, HohVer))
+                    pygame.draw.rect(screen, color, (0, pxl_height-HohVer, pxl_width, HohVer))
+
+                    for j in range(len(l)):
+                        if fish.count(j) != 0:
+                            if fish.index(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (
+                                    j // width) < y + 2 and (j // width) > y - 3:
+
+                                screen.blit(pygame.transform.scale(deadf, (ZOOM_FB, ZOOM_FB)), ((2.5 + (j % width-x))*ZOOM_FB+BreiVer, (2.5 + (j // width-y))*ZOOM_FB+HohVer))
+                    for j in range(len(l)):
+                        if holes.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (
+                                j // width) < y + 2 and (j // width) > y - 3:
+                            screen.blit(pygame.transform.scale(holeimg, (ZOOM_FB, ZOOM_FB)), ((2.5 + (j % width-x))*ZOOM_FB+BreiVer, (2.5 + (j // width-y))*ZOOM_FB+HohVer))
+
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if mice.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (
+                                j // width) > y - 3:
+                            screen.blit(pygame.transform.scale(mouseimg, (ZOOM_FB, ZOOM_FB)), ((2.5 + (j % width-x))*ZOOM_FB+BreiVer, (2.5 + (j // width-y))*ZOOM_FB+HohVer))
+                    if yourtime > 10 and mousepoweractivated.gettime() > 45:
+                        for i in dogs:
+                            if abs(i.x - x) < 3 and abs(i.y - y) < 3:
+                                i.draw()
+                    if yourtime < 10 or mousepoweractivated.gettime() < 45:
+                        for i in dogs:
+                            if abs(i.x - x) < 3 and abs(i.y - y) < 3:
+                                i.sleep_draw()
 
 
+                    pygame.draw.circle(screen, (color[0], color[1], color[2]), (2.5*ZOOM_FB + BreiVer, 2.5*ZOOM_FB + HohVer), 4.5 * ZOOM_FB, int(2.5*ZOOM_FB))
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if fish.count(j) != 0:
+                            if fish.index(j) == 0:
+                                if (j % width) < x + 4 and (j % width) > x - 5 and (j // width) < y + 4 and (
+                                        j // width) > y - 5:
+                                    screen.blit(pygame.transform.scale(glowf[fishmodel], (ZOOM_FB, ZOOM_FB)), (
+                                    (2.5 + (j % width - x)) * ZOOM_FB + BreiVer,
+                                    (2.5 + (j // width - y)) * ZOOM_FB + HohVer))
+
+                    #minimap
+                    pygame.draw.rect(screen,(0,0,0),(pxl_width-ZOOM_FB-10,pxl_height-ZOOM_FB-10,ZOOM_FB,ZOOM_FB),0,4,4,4,4)
+                    pygame.draw.rect(screen,(255-color[0],255-color[1],255-color[2]),(pxl_width-ZOOM_FB-10,pxl_height-ZOOM_FB-10,ZOOM_FB,ZOOM_FB),3,4,4,4,4)
+
+                    pygame.draw.circle(screen, (255,255,255),(pxl_width-ZOOM_FB-10+x/width*ZOOM_FB,pxl_height-ZOOM_FB-10+y/width*ZOOM_FB), max(ZOOM_FB/20,5))
+                    for i in dogpos:
+                        pygame.draw.circle(screen, (255,0,0),(pxl_width-ZOOM_FB-10+i[0]/width*ZOOM_FB,pxl_height-ZOOM_FB-10+i[1]/width*ZOOM_FB), max(ZOOM_FB/30,5))
 
 
+                #inhole
+                else:
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (
+                                j // width) > y - 3:
+                            if l[j][0] == "w":
+                                screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
+                                # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
+                            if l[j][0] == "p":
+                                pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
+                                screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
+                                # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
+                            if l[j] == "e":
+                                pygame.draw.rect(screen, (123, 92, 19), (col_idx, row_idx, FB, FB))
+
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if fish.count(j) != 0:
+                            if fish.index(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (
+                                    j // width) < y + 2 and (j // width) > y - 3:
+                                screen.blit(pygame.transform.scale(deadf, (FB, FB)), (col_idx, row_idx))
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if holes.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (
+                                j // width) < y + 2 and (j // width) > y - 3:
+                            screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if mice.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (
+                                j // width) < y + 2 and (j // width) > y - 3:
+                            screen.blit(pygame.transform.scale(mouseimg, (FB, FB)), (col_idx, row_idx))
+                    if yourtime > 10 and mousepoweractivated.gettime() > 45:
+                        for i in dogs:
+                            if abs(i.x - x) < 3 and abs(i.y - y) < 3:
+                                i.draw()
+                    if yourtime < 10 or mousepoweractivated.gettime() < 45:
+                        for i in dogs:
+                            if abs(i.x - x) < 3 and abs(i.y - y) < 3:
+                                i.sleep_draw()
+                    pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer),
+                                       4.25 * FB, int(2.25 * FB))
+
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if fish.count(j) != 0:
+                            if fish.index(j) == 0:
+                                if (j % width) < x + 4 and (j % width) > x - 5 and (j // width) < y + 4 and (
+                                        j // width) > y - 5:
+                                    screen.blit(pygame.transform.scale(glowf[fishmodel], (FB, FB)), (col_idx, row_idx))
+
+                    pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer),
+                                       6 * FB, int(2.25 * FB))
+
+                    mousecontrol = False
+                    for j in range(len(l)):
+                        row_idx = (j // width) * FB + HohVer
+                        col_idx = (j % width) * FB + BreiVer
+                        if holes.count(j) != 0:
+                            screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
+
+                    if pygame.mouse.get_pressed()[0] and holes.count(
+                            int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
+                                    (pygame.mouse.get_pos()[1] - HohVer) / FB) * width) != 0:
+                        x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
+                            (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
 
 
             else:
@@ -718,7 +880,6 @@ while True:
                             screen.blit(pygame.transform.scale(wall,(FB,FB)),(col_idx,row_idx))
                             #screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
-                            #print(col_idx, row_idx)
                         if l[j][0] == "p":
                             pygame.draw.rect(screen, (0,0,255), (col_idx, row_idx, FB, FB))
                             screen.blit(pygame.transform.scale(path,(FB,FB)),(col_idx,row_idx))
@@ -745,14 +906,18 @@ while True:
                     col_idx = (j % width) * FB + BreiVer
                     if mice.count(j) != 0 and (j % width) < x + 2 and (j % width) > x - 3 and (j // width) < y + 2 and (j //width) > y - 3:
                             screen.blit(pygame.transform.scale(mouseimg, (FB, FB)), (col_idx, row_idx))
-                if yourtime > 10:
+                if yourtime > 10 and mousepoweractivated.gettime() > 45:
                     for i in dogs:
                         if abs(i.x-x) < 3 and abs(i.y-y) < 3:
                             i.draw()
-                if yourtime < 10:
+                if yourtime < 10 or mousepoweractivated.gettime() < 45:
                     for i in dogs:
                         if abs(i.x-x) < 3 and abs(i.y-y) < 3:
                             i.sleep_draw()
+
+
+
+
                 pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 4.25 * FB, int(2.25 * FB))
 
                 for j in range(len(l)):
@@ -765,7 +930,12 @@ while True:
                                 screen.blit(pygame.transform.scale(glowf[fishmodel], (FB, FB)), (col_idx, row_idx))
 
                 pygame.draw.circle(screen, (color[0], color[1], color[2]), (x * FB + BreiVer, y * FB + HohVer), 6 * FB, int(2.25 * FB))
-
+                if yourtime > 10 and mousepoweractivated.gettime() > 45:
+                    for i in dogpos:
+                        dogs[0].draw_at(i[0],i[1],dogrichtungen[dogpos.index(i)])
+                if yourtime < 10 or mousepoweractivated.gettime() < 45:
+                    for i in dogpos:
+                        dogs[0].sleep_draw_at(i[0], i[1], dogrichtungen[dogpos.index(i)])
                 if inhole:
                     mousecontrol = False
                     for j in range(len(l)):
@@ -774,7 +944,7 @@ while True:
                         if holes.count(j) != 0:
                             screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
 
-                    mousevis = True
+
                     if pygame.mouse.get_pressed()[0] and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
                             (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
                         x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
@@ -789,7 +959,6 @@ while True:
                     screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
                     # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
-                    # print(col_idx, row_idx)
                 if l[j][0] == "p":
                     pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
                     screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
@@ -827,21 +996,29 @@ while True:
                     if holes.count(j) != 0:
                         screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
 
-                mousevis = True
+
                 if pygame.mouse.get_pressed()[0] and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
                         (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
                     x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
                         (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
-            if yourtime > 10:
+            if yourtime > 10 and mousepoweractivated.gettime() > 45:
                 for i in dogs:
                     i.draw()
-            if yourtime < 10:
+            if yourtime < 10 or mousepoweractivated.gettime() < 45:
                 for i in dogs:
                     i.sleep_draw()
         player()
         if yourtime > 10:
             for i in dogs:
                 i.run()
+        if dogshowtimer.gettime() > 5:
+            dogpos = []
+            dogrichtungen = []
+            dogshowtimer.start()
+            for i in dogs:
+                dogpos.append([i.x,i.y])
+                dogrichtungen.append(i.richtung)
+
 
 
 
@@ -849,12 +1026,14 @@ while True:
         for i in range(hearts + 1):
             screen.blit(pygame.transform.scale(heartimg, (FB // 2, FB // 2)), (pxl_width - i * (FB // 2 + 2), 0))
         speedruntimer.resume()
+        dogshowtimer.resume()
         mousepoweractivated.resume()
 
     if whereru == "pause":
         pygame.mouse.set_visible(True)
         mousepoweractivated.pause()
         speedruntimer.pause()
+        dogshowtimer.pause()
 
         if pausewru == "main":
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",80)
@@ -994,7 +1173,6 @@ while True:
                 screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
                 # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
 
-                # print(col_idx, row_idx)
             if l[j][0] == "p":
                 pygame.draw.rect(screen, (0, 0, 255), (col_idx, row_idx, FB, FB))
                 screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
@@ -1027,7 +1205,7 @@ while True:
                (pxl_height - 100) // 2, pxl_width - 20, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
                "New Round",
-               "reset();global whereru;whereru = 'play';speedruntimer.start()", 50)
+               "reset();global whereru;whereru = 'play';speedruntimer.start();dogshowtimer.start()", 50)
 
         button(10,
                pxl_height // 1.25, pxl_width - 20, 100,
@@ -1049,7 +1227,7 @@ while True:
                (pxl_height-100)//2, pxl_width-20, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
                "New Round",
-               "reset();global whereru;whereru = 'play';speedruntimer.start()", 50)
+               "reset();global whereru;whereru = 'play';speedruntimer.start(),dogshowtimer.start()", 50)
         button(10,
                pxl_height // 1.25, pxl_width - 20, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
