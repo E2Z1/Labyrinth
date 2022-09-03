@@ -50,6 +50,18 @@ def maze(ms):
             except:
                 finished = True
 
+
+    for i in range(int(len(map[0]))):
+        map[0][i] = "w"
+
+    for i in range(len(map[-1])):
+        map[-1][i] = "w"
+
+    for i in range(len(map)):
+        map[i][0] = "w"
+        map[i][-1] = "w"
+
+
     maze = []
 
     for i in range(len(map)):

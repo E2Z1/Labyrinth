@@ -5,6 +5,7 @@ import random
 import pygame
 import sys
 from pygame.locals import *
+import os
 from os import listdir
 from os.path import isfile, join
 import time
@@ -68,7 +69,6 @@ class timer:
         if self.ispause:
             self.startpoint = time.time()-self.timeofpause
             self.ispause = False
-
 class dog:
     def __init__(self):
         matrixl = []
@@ -107,41 +107,42 @@ class dog:
         finder = AStarFinder()
         self.path, _ = finder.find_path(self.start, self.end, grid)
     def run(self):
-        if mousepoweractivated.gettime() > 45:
 
-            geschw = 0.01
+        if len(self.path) != 0:
+            if mousepoweractivated.gettime() > 45:
 
-
-            if int(self.x) == int(x) and int(self.y) == int(y):
-                damage()
-                return True
+                geschw = 0.01
 
 
-            self.fastrichtung = 0
-            self.anzahlrichtungen = 0
-            if self.x < int(self.path[0][0])+0.475:
-                self.fastrichtung += 3
-                self.anzahlrichtungen += 1
-                self.x += geschw * 60 / (clock.get_fps() + 0.00000001)
-            if self.x > int(self.path[0][0])+0.525:
 
-                self.fastrichtung += 1
-                self.anzahlrichtungen += 1
-                self.x -= geschw * 60 / (clock.get_fps() + 0.00000001)
-            if self.y < int(self.path[0][1])+0.475:
+                self.fastrichtung = 0
+                self.anzahlrichtungen = 0
+                if self.x < int(self.path[0][0])+0.475:
+                    self.fastrichtung += 3
+                    self.anzahlrichtungen += 1
+                    self.x += geschw * 60 / (clock.get_fps() + 0.00000001)
+                if self.x > int(self.path[0][0])+0.525:
 
-                self.fastrichtung += 2
-                self.anzahlrichtungen += 1
-                self.y += geschw * 60 / (clock.get_fps() + 0.00000001)
-            if self.y > int(self.path[0][1])+0.525:
+                    self.fastrichtung += 1
+                    self.anzahlrichtungen += 1
+                    self.x -= geschw * 60 / (clock.get_fps() + 0.00000001)
+                if self.y < int(self.path[0][1])+0.475:
 
-                self.fastrichtung += 0
-                self.anzahlrichtungen += 1
-                self.y -= geschw * 60 / (clock.get_fps() + 0.00000001)
-            if int(self.y) == int(self.path[0][1]) and int(self.x) == int(self.path[0][0]):
-                self.path.pop(0)
-            if self.anzahlrichtungen != 0:
-                self.richtung = self.fastrichtung/self.anzahlrichtungen
+                    self.fastrichtung += 2
+                    self.anzahlrichtungen += 1
+                    self.y += geschw * 60 / (clock.get_fps() + 0.00000001)
+                if self.y > int(self.path[0][1])+0.525:
+
+                    self.fastrichtung += 0
+                    self.anzahlrichtungen += 1
+                    self.y -= geschw * 60 / (clock.get_fps() + 0.00000001)
+                    print(int(self.y),int(self.path[0][1]),int(self.x),int(self.path[0][0]))
+                if int(self.y) == int(self.path[0][1]) and int(self.x) == int(self.path[0][0]) and not len(self.path) == 0:
+                    self.path.pop(0)
+                if self.anzahlrichtungen != 0:
+                    self.richtung = self.fastrichtung/self.anzahlrichtungen
+                if int(self.y) == int(y) and int(self.x) == int(x):
+                    damage()
 
 
     def draw(self):
@@ -327,15 +328,21 @@ def changesettings(key,inhalt):
     settings.close()
 
 def button(x,y,width,height,colorbox,colortext,font,text,action,size):
+    global mouse,scrollverschiebung
     writething = pygame.font.SysFont(font,size).render(text,True,colortext)
     pygame.draw.rect(screen,colorbox,(x,y,width,height),0,4,4,4,4)
     screen.blit(writething,(x+(width - writething.get_width())//2,y+(height - writething.get_height())//2))
     if x+width > pygame.mouse.get_pos()[0] > x and y+height > pygame.mouse.get_pos()[1] > y and mouse == 1:
         exec(action)
+        mouse = 0
+        scrollverschiebung = 0
+
+
+
 startx = 0
 starty = 0
 def reset():
-    global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,holes,mice,dogs,whereru,howmanydogs,dogpos,dogrichtungen
+    global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,holes,mice,dogs,whereru,howmanydogs,dogpos,dogrichtungen,savedas
     fat = 0
     l = generate(width, height)
     geschw = 0.03
@@ -396,7 +403,7 @@ def reset():
     for i in dogs:
         i.pathfind()
     whereru = "play"
-
+    savedas = False
 
 def neue_richtung():
     # willkürliche permutation aus den 4 himmelsrichtungen. osten, sueden, westen, norden
@@ -420,7 +427,9 @@ def neue_richtung():
 
 
 def generate(width, hight):
+
     return maze.maze(width)
+
     # e: empty, w: wall, p: path
     lab = ['e'] * width * hight
 
@@ -514,8 +523,18 @@ def generate(width, hight):
 
 yourtime = 0
 lastposkitty = (0,0)
+
+def scrolling():
+    global scrollverschiebung
+    #up
+    if scroll == 4:
+        scrollverschiebung -= 10
+    #down
+    if scroll == 5:
+        scrollverschiebung += 10
+
 def player():
-    global richtung,y,x,hearts,l,whereru,fat,geschw,inhole,mousevis,mice,lastposkitty,dogs,finaltime
+    global richtung,y,x,hearts,l,whereru,fat,geschw,inhole,mousevis,mice,lastposkitty,dogs,finaltime,mouse
     fastrichtung = 0
     anzahlrichtungen = 0
     key = pygame.key.get_pressed()
@@ -527,20 +546,22 @@ def player():
         fastrichtung += 1
         anzahlrichtungen += 1
         x -= geschw*60/(clock.get_fps()+0.00000001)
-    if (key[pygame.K_s] or key[pygame.K_DOWN]) and y < height:
+    if (key[pygame.K_s] or key[pygame.K_DOWN]) and y < height-geschw*60/(clock.get_fps()+0.00000001):
         fastrichtung += 2
         anzahlrichtungen += 1
         y += geschw*60/(clock.get_fps()+0.00000001)
-    if (key[pygame.K_d] or key[pygame.K_RIGHT]) and x < width:
+    if (key[pygame.K_d] or key[pygame.K_RIGHT]) and x < width-geschw*60/(clock.get_fps()+0.00000001):
         fastrichtung += 3
         anzahlrichtungen += 1
         x += geschw*60/(clock.get_fps()+0.00000001)
     if anzahlrichtungen != 0:
         richtung = fastrichtung/anzahlrichtungen
 
-    if mousecontrol and pygame.mouse.get_pressed()[0]:
+    if mousecontrol and mouse == 1:
         x,y = (pygame.mouse.get_pos()[0]-BreiVer)/FB,(pygame.mouse.get_pos()[1]-HohVer)/FB
         mousevis = True
+        mouse = 0
+
     if not mousecontrol and not inhole:
         mousevis = False
     else:
@@ -613,6 +634,58 @@ def player():
         for i in dogs:
             i.pathfind()
     lastposkitty = (int(x),int(y))
+
+dogsavinglist = ["richtung","anzahlrichtungen","fastrichtung","x","y"]
+dogsavingvariable = ""
+savingvariable = ""
+savinglist = ["l","x","y","hearts","fish","feld","fat","geschw","startx","starty","howmanydogs","holes","mice","dogs","dogpos","dogrichtungen"]
+def save(filename):
+    global savinglist,savingvariable,mousepoweractivated,speedruntimer,dogshowtimer,savedas
+    for i in savinglist:
+        exec("global "+i)
+    file = open("saves/"+filename,"w")
+
+    for i in savinglist:
+        if i != "dogs":
+
+            if i == "whereru":
+                exec("global i,savingvariable;savingvariable = " + i)
+                file.write(i + " = '" + str(savingvariable) + "'\n")
+            else:
+                exec("global i,savingvariable;savingvariable = "+i)
+                file.write(i+" = "+str(savingvariable)+"\n")
+        else:
+            file.write("dogs = []\n")
+            for k in range(howmanydogs):
+                file.write("dogs.append(dog())\n")
+                for j in dogsavinglist:
+                    exec("global j,dogsavingvariable,dogs;dogsavingvariable = dogs["+str(k)+"]." + j)
+                    file.write("dogs["+str(k)+"]."+j + " = " + str(dogsavingvariable) + "\n")
+    file.write("mousepoweractivated.startpoint = "+str(mousepoweractivated.startpoint)+ "\n")
+    file.write("mousepoweractivated.ispause = "+str(mousepoweractivated.ispause)+ "\n")
+    file.write("mousepoweractivated.timeofpause = "+str(mousepoweractivated.timeofpause)+ "\n")
+    file.write("speedruntimer.startpoint = "+str(speedruntimer.startpoint)+ "\n")
+    file.write("speedruntimer.ispause = "+str(speedruntimer.ispause)+ "\n")
+    file.write("speedruntimer.timeofpause = "+str(speedruntimer.timeofpause)+ "\n")
+    file.write("dogshowtimer.startpoint = "+str(dogshowtimer.startpoint)+ "\n")
+    file.write("dogshowtimer.ispause = "+str(dogshowtimer.ispause)+ "\n")
+    file.write("dogshowtimer.timeofpause = "+str(dogshowtimer.timeofpause)+ "\n")
+
+    file.close()
+    savedas = filename
+
+def getsaved(filename):
+    global savinglist,savedas
+    globalstring = "global "
+    for i in range(len(savinglist)):
+        if i+1 == len(savinglist):
+            globalstring += savinglist[i]+";"
+        else:
+            globalstring += savinglist[i]+","
+    file = open("saves/"+filename, "r")
+    exec(globalstring+file.read())
+    savedas = filename
+    file.close()
 def plymusic(music,channel,loop):
     pygame.mixer.Channel(1).set_volume(volume*sounds)
 
@@ -640,19 +713,33 @@ def damage():
 timebetweenpauseandplay = 0
 
 pausewru = "main"
-
+asktosave = False
 tick = 0
 fishmodel = 0
 dogpos = []
 dogrichtungen = []
+lastwhereru = ["main"]
+savedas = False
 
 reset()
 mousevis = mousecontrol
 inhole = False
+scrollverschiebung = 0
+selectedworld = -1
+whereru = "main"
+nameofworld = ""
+quitaction = ""
+tutstage = 0
+
+
 while True:
     global x,y
-
+    if lastwhereru[-1] != whereru:
+        lastwhereru.append(whereru)
+    if len(lastwhereru) == 11:
+        lastwhereru.pop(0)
     mouse = 0
+    scroll = 0
     tick += 1
     pxl_width, pxl_height = pygame.display.get_surface().get_size()
 
@@ -674,16 +761,24 @@ while True:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            sys.exit()
+            if asktosave:
+                whereru = "quit"
+                quitaction = "sys.exit()"
+            else:
+                sys.exit()
         if event.type == pygame.KEYDOWN:
+            if whereru == "saveas":
+                nameofworld += event.unicode
+                if event.key == pygame.K_BACKSPACE:
+                    nameofworld = ""
             if event.key == pygame.K_r:
                 reset()
-            if event.key == pygame.K_ESCAPE and whereru == "play" and timebetweenpauseandplay > 10:
+            if event.key == pygame.K_ESCAPE and (whereru == "play" or whereru == "tut") and timebetweenpauseandplay > 10:
                 whereru = "pause"
                 timebetweenpauseandplay = 0
                 pausewru = "main"
             if event.key == pygame.K_ESCAPE and whereru == "pause" and timebetweenpauseandplay > 10:
-                whereru = "play"
+                whereru = lastwhereru[-2]
                 timebetweenpauseandplay = 0
             if whereru == "showcase":
                 whereru = "win"
@@ -692,16 +787,156 @@ while True:
 
 
             if event.key == pygame.K_LCTRL:
-                sys.exit()
-        if event.type == pygame.MOUSEBUTTONDOWN:
+                whereru = "main"
+        if event.type == pygame.MOUSEBUTTONUP:
             mouse = event.button
 
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            scroll = event.button
+
+    if whereru == "main":
+        pygame.mouse.set_visible(True)
+        mousepoweractivated.pause()
+        speedruntimer.pause()
+        dogshowtimer.pause()
+        button(10, pxl_height - pxl_height / 1.4, pxl_width / 2 - 15, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Play",
+               "global whereru;reset();whereru = 'play'", 80)
+        button(pxl_width / 2 + 5, pxl_height - pxl_height / 1.4, pxl_width / 2 - 15, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Play Saved",
+               "global whereru;whereru = 'saved'", 80)
+        button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 1.15, pxl_width - 20, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Create",
+               "webbrowser.open(r'https://e2z1.ml/projects/KittyLabyrinth')", 80)
+        button(10, pxl_height - pxl_height / 2.5, pxl_width / 2 - 15, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Exit",
+               "sys.exit()", 80)
+        button(pxl_width / 2 + 5, pxl_height - pxl_height / 2.5, pxl_width / 2 - 15, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Fullscreen",
+               "global screen;screen = pygame.display.set_mode((0,0),FULLSCREEN)", 80)
+        button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 1.8, pxl_width - 20, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Settings",
+               "global whereru,pausewru;whereru = 'pause';pausewru = 'settings'", 80)
+        button(10, pxl_height - pxl_height / 5, pxl_width / 2 - 15, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Help",
+               "webbrowser.open(r'https://e2z1.ml/projects/KittyLabyrinth')", 80)
+        button(pxl_width / 2 + 5, pxl_height - pxl_height / 5, pxl_width / 2 - 15, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Tutorial",
+               "global whereru;whereru = 'tut'", 80)
+        asktosave = False
+    if whereru == "quit":
+        pygame.mouse.set_visible(True)
+        mousepoweractivated.pause()
+        speedruntimer.pause()
+        dogshowtimer.pause()
+
+        button(0, 0, pxl_width/2, pxl_height/2,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Save & Quit",
+               "global whereru,savedas,quitaction\nif not savedas: whereru = 'saveas'\nelse: save(savedas); exec(quitaction)", 70)
+        button(pxl_width / 2+3, 0, pxl_width / 2-3, pxl_height / 2,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Just Quit",
+               "global quitaction; exec(quitaction)", 70)
+        button(0, pxl_height/2+3, pxl_width, pxl_height / 2-3,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Cancel",
+               "global whereru,lastwhereru;whereru = lastwhereru[-2];lastwhereru.pop(-1)", 70)
+        asktosave = False
+
+    if whereru == "saveas":
+        writething = pygame.font.SysFont(font, 150).render(nameofworld, True, (255 - color[0], 255 - color[1], 255 - color[2]))
+        screen.blit(writething,
+                    ((pxl_width - writething.get_width()) // 2,(pxl_height - writething.get_height()) // 2))
+        button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 5, pxl_width - 20, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Save & Quit",
+               "global nameofworld;save(nameofworld+'.txt'); sys.exit()", 70)
+    if whereru == "saved":
+        pygame.mouse.set_visible(True)
+        mousepoweractivated.pause()
+        speedruntimer.pause()
+        dogshowtimer.pause()
+        scrolling()
+
+
+        scrolling()
+        worldlist = [f for f in listdir("saves")]
+        try:
+            worldlist.remove(".DS_Store")
+        except:
+            pass
+        for i in range(len(worldlist)):
+            worldlist[i] = worldlist[i][0:-4]
+        for i in range(len(worldlist)):
+            if selectedworld == i:
+                button(5, i * (100 + 5) + scrollverschiebung, 500, 100,
+                       (0,0,200), (color[0], color[1], color[2]), font,
+                       worldlist[i],
+                       "global whereru; whereru = 'play'; getsaved(worldlist[selectedworld]+'.txt')", 50)
+            else:
+                button(5, i * (100 + 5) + scrollverschiebung, 500, 100,
+                       (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+                       worldlist[i],
+                       "global selectedworld; selectedworld = i", 50)
+
+
+        pygame.draw.rect(screen, color, (
+        0, pxl_height - pxl_height / 2.5 - 5, pxl_width, pxl_height - (pxl_height - pxl_height / 2.5 - 5)))
+        if selectedworld != -1:
+            button(10, pxl_height - pxl_height / 2.5, (pxl_width - 30) / 2, 100,
+                   (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Delete",
+                   "global selectedworld, worldlist ;os.remove('saves/'+worldlist[selectedworld]+'.txt')", 80)
+            button(20 + (pxl_width - 30) / 2, pxl_height - pxl_height / 2.5, (pxl_width - 30) / 2, 100,
+                   (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+                   "Play", "global whereru; whereru = 'play'; getsaved(worldlist[selectedworld]+'.txt')", 80)
+        button(pxl_width / 2 - 500 / 2, pxl_height - pxl_height / 5, 500, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Back",
+               "global whereru,lastwhereru;whereru = lastwhereru[-2]", 80)
+
+
+
+    if whereru == "tut":
+        pygame.mouse.set_visible(False)
+        mousepoweractivated.pause()
+        speedruntimer.pause()
+        dogshowtimer.pause()
+
+
+        asktosave = False
+        if tutstage == 0:
+            l = 49*["p"]
+            width = 7
+            height = 7
+            x,y = 3.5,3.5
+            dogs = []
+            tutstage = 0.1
+        FB = min(pxl_width // width, pxl_height // width)
+        for j in range(len(l)):
+            row_idx = (j // width) * FB + HohVer
+            col_idx = (j % width) * FB + BreiVer
+            if l[j][0] == "w":
+                screen.blit(pygame.transform.scale(wall, (FB, FB)), (col_idx, row_idx))
+                # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+
+            if l[j][0] == "p":
+                screen.blit(pygame.transform.scale(path, (FB, FB)), (col_idx, row_idx))
+                # screen.blit(pygame.font.SysFont(font,FB).render(l[j][1],True,(0,0,0)),(col_idx,row_idx))
+        player()
+        if int(tutstage) == 0:
+            screen.blit(pygame.font.SysFont(font,50).render("Move with WASD or the arrowkeys",True,(251,72,196)),(0,0))
+            screen.blit(pygame.font.SysFont(font,50).render(str(round(tutstage*10,1))+"/10",True,(251,72,196)),(0,80))
+            if pygame.key.get_pressed()[pygame.K_d] or pygame.key.get_pressed()[pygame.K_RIGHT] or pygame.key.get_pressed()[pygame.K_w] or pygame.key.get_pressed()[pygame.K_UP] or pygame.key.get_pressed()[pygame.K_a] or pygame.key.get_pressed()[pygame.K_LEFT] or pygame.key.get_pressed()[pygame.K_s] or pygame.key.get_pressed()[pygame.K_DOWN]:
+                tutstage += 0.001
+
+
     if whereru == "play":
+        speedruntimer.resume()
+        dogshowtimer.resume()
+        mousepoweractivated.resume()
+        asktosave = True
         yourtime = round(speedruntimer.gettime(),2)
         pygame.mouse.set_visible(mousevis)
+        if not pygame.mouse.get_focused():
+            whereru = "pause"
         if not mousevis:
             pygame.mouse.set_pos(pxl_width//2, pxl_height//2)
-
 
 
 
@@ -864,11 +1099,12 @@ while True:
                         if holes.count(j) != 0:
                             screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
 
-                    if pygame.mouse.get_pressed()[0] and holes.count(
+                    if mouse == 1 and holes.count(
                             int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
                                     (pygame.mouse.get_pos()[1] - HohVer) / FB) * width) != 0:
                         x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
                             (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
+                        mouse = 0
 
 
             else:
@@ -945,10 +1181,11 @@ while True:
                             screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
 
 
-                    if pygame.mouse.get_pressed()[0] and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
+                    if mouse == 1 and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
                             (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
                         x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
                             (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
+                        mouse = 0
 
 
         else:
@@ -997,10 +1234,12 @@ while True:
                         screen.blit(pygame.transform.scale(holeimg, (FB, FB)), (col_idx, row_idx))
 
 
-                if pygame.mouse.get_pressed()[0] and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
+                if mouse == 1 and holes.count(int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + int(
                         (pygame.mouse.get_pos()[1] - HohVer) / FB)*width) != 0:
                     x, y = int((pygame.mouse.get_pos()[0] - BreiVer) / FB) + 0.5, int(
                         (pygame.mouse.get_pos()[1] - HohVer) / FB) + 0.5
+                    mouse = 0
+
             if yourtime > 10 and mousepoweractivated.gettime() > 45:
                 for i in dogs:
                     i.draw()
@@ -1011,7 +1250,7 @@ while True:
         if yourtime > 10:
             for i in dogs:
                 i.run()
-        if dogshowtimer.gettime() > 5:
+        if dogshowtimer.gettime() > 5 and whereru != "pause":
             dogpos = []
             dogrichtungen = []
             dogshowtimer.start()
@@ -1025,9 +1264,7 @@ while True:
         screen.blit(pygame.font.SysFont(font, 50).render(str(yourtime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
         for i in range(hearts + 1):
             screen.blit(pygame.transform.scale(heartimg, (FB // 2, FB // 2)), (pxl_width - i * (FB // 2 + 2), 0))
-        speedruntimer.resume()
-        dogshowtimer.resume()
-        mousepoweractivated.resume()
+
 
     if whereru == "pause":
         pygame.mouse.set_visible(True)
@@ -1036,35 +1273,49 @@ while True:
         dogshowtimer.pause()
 
         if pausewru == "main":
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru;whereru = 'play'",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru,lastwhereru;whereru = lastwhereru[-2]",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Go to Main","global whereru,quitaction\nif asktosave: whereru = 'quit';quitaction = "+'"'+"global whereru;whereru = 'main'"+'"\nelse: whereru = "main"',80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Settings","global pausewru;pausewru = 'settings'",80)
+            button(10,pxl_height-pxl_height/1.15,pxl_width/2-15,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Help","webbrowser.open(r'https://e2z1.ml/projects/KittyLabyrinth')",80)
+            button(pxl_width/2+5,pxl_height-pxl_height/1.15,pxl_width/2-15,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Tutorial","global whereru;whereru = 'tut'",80)
+            #button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Audio","global pausewru;pausewru = 'audio'",80)
+        if pausewru == "settings":
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Audio","global pausewru;pausewru = 'audio'",80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.8,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Look","global pausewru;pausewru = 'textures'",80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Debug","global pausewru;pausewru = 'debug'",80)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Help","webbrowser.open(r'https://e2z1.ml/projects/KittyLabyrinth')",80)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/2.5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Audio","global pausewru;pausewru = 'audio'",80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/5,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global whereru,lastwhereru;whereru = lastwhereru[-2]",80)
+
         if pausewru == "textures":
-            button(10,pxl_height-pxl_height/2.5,(pxl_width-30)/2,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Colors","global pausewru;pausewru = 'colors'",80)
-            changesettings("zoom",str(zoom))
-            button(20+(pxl_width-30)/2,pxl_height-pxl_height/2.5,(pxl_width-30)/2,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Zoom: "+str(zoom),"global zoom;zoom = switchboolean(zoom)",80)
-            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
+            scrolling()
             texturepackslist = [f for f in listdir("texturepacks") if not isfile(join("texturepacks", f))]
             for i in range(len(texturepackslist)):
                 if texturepackslist[i] == texturepack:
-                    button(pxl_height/2 / len(texturepackslist) + 10, i * (
-                        pxl_height/2 / len(texturepackslist)) + i * 10, 500,
-                           pxl_height/2 / len(texturepackslist),
+                    button(105, i*(100+5) + scrollverschiebung, 500,
+                           100,
                            (0,0,200), (color[0], color[1], color[2]), font,
                            texturepackslist[i],
                            "global texturepack;texturepack = '" + texturepackslist[i] + "'", 50)
                 else:
-                    button(pxl_height/2 / len(texturepackslist)+10, i*(pxl_height/2 / len(texturepackslist))+i*10, 500, pxl_height/2 / len(texturepackslist),
+                    button(105, i*(100+5)+scrollverschiebung, 500, 100,
                            (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, texturepackslist[i],
                            "global texturepack;texturepack = '"+texturepackslist[i]+"'", 50)
                 screen.blit(
                     pygame.transform.scale(pygame.image.load("texturepacks/" + texturepackslist[i] + "/logo.png"), (
-                    pxl_height/2 / len(texturepackslist),
-                    pxl_height/2 / len(texturepackslist))),
-                    (0, i * (pxl_height/2 / len(texturepackslist)) + i * 10))
+                    100,
+                    100)),
+                    (0, i*(100+5)+scrollverschiebung))
 
+            pygame.draw.rect(screen,color,(0,pxl_height - pxl_height / 2.5-5,pxl_width,pxl_height-(pxl_height - pxl_height / 2.5-5)))
+            button(10, pxl_height - pxl_height / 2.5, (pxl_width - 30) / 2, 100,
+                   (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Colors",
+                   "global pausewru;pausewru = 'colors'", 80)
+            changesettings("zoom", str(zoom))
+            button(20 + (pxl_width - 30) / 2, pxl_height - pxl_height / 2.5, (pxl_width - 30) / 2, 100,
+                   (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+                   "Zoom: " + str(zoom), "global zoom;zoom = switchboolean(zoom)", 80)
+            button(pxl_width / 2 - 500 / 2, pxl_height - pxl_height / 5, 500, 100,
+                   (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Done",
+                   "global pausewru;pausewru = 'settings'", 80)
             textures()
             changesettings("texturepack","'"+texturepack+"'")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   #hi
         if pausewru == "debug":
@@ -1076,7 +1327,7 @@ while True:
                    "Show FPS: " + " " + str(showfps), "global showfps; showfps = switchboolean(showfps)", 80)
             button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Mousecontrol: "+str(mousecontrol),"global mousecontrol;mousecontrol = switchboolean(mousecontrol)",80)
             changesettings("mousecontrol",str(mousecontrol))
-            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'settings'",80)
         if pausewru == "colors":
             m = pygame.mouse
             #ganz unten
@@ -1131,7 +1382,7 @@ while True:
 
 
 
-            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'settings'",80)
 
         if pausewru == "audio":
             pygame.draw.rect(screen,(255 - color[0], 255 - color[1], 255 - color[2]),(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.4,pxl_width-20,10),0,4,4,4,4)
@@ -1161,7 +1412,7 @@ while True:
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
                    "Sounds: " + " " + str(sounds), "global sounds; sounds = switchboolean(sounds)", 100)
             changesettings("sounds",str(sounds))
-            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'main'",80)
+            button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'settings'",80)
 
         screen.blit(pygame.font.SysFont(font, 50).render(str(yourtime), True, (255-color[0],255-color[1],255-color[2])), (0, 0))
 
