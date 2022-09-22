@@ -15,7 +15,7 @@ import webbrowser
 
 import maze
 
-
+# searchstamp
 howmanydogs = 3
 showfps = True
 max_fps = 10000000000
@@ -52,6 +52,7 @@ pygame.display.set_allow_screensaver(False)
 pygame.display.set_icon(pygame.image.load("texturepacks/icon.png"))
 legit = True
 
+# searchstamp
 
 class timer:
     def __init__(self):
@@ -69,6 +70,7 @@ class timer:
         if self.ispause:
             self.startpoint = time.time()-self.timeofpause
             self.ispause = False
+# searchstamp
 class dog:
     def __init__(self):
         matrixl = []
@@ -136,7 +138,6 @@ class dog:
                     self.fastrichtung += 0
                     self.anzahlrichtungen += 1
                     self.y -= geschw * 60 / (clock.get_fps() + 0.00000001)
-                    print(int(self.y),int(self.path[0][1]),int(self.x),int(self.path[0][0]))
                 if int(self.y) == int(self.path[0][1]) and int(self.x) == int(self.path[0][0]) and not len(self.path) == 0:
                     self.path.pop(0)
                 if self.anzahlrichtungen != 0:
@@ -147,7 +148,7 @@ class dog:
 
     def draw(self):
         global zoom,legit
-        if zoom and legit:
+        if zoom and legit and not inhole:
             screen.blit(pygame.transform.rotate(pygame.transform.scale(dogimg, (ZOOM_FB,ZOOM_FB)), self.richtung * 90),
                         ((2.5 + (self.x - x)) * ZOOM_FB+BreiVer
                          - (pygame.transform.rotate(pygame.transform.scale(dogimg, (ZOOM_FB, ZOOM_FB)),
@@ -182,7 +183,7 @@ class dog:
                              .get_height()) / 2))
     def sleep_draw(self):
         global zoom, legit
-        if zoom and legit:
+        if zoom and legit and not inhole:
             screen.blit(pygame.transform.rotate(pygame.transform.scale(sldogimg, (ZOOM_FB, ZOOM_FB)), self.richtung * 90),
                         ((2.5 + (self.x - x)) * ZOOM_FB + BreiVer
                          - (pygame.transform.rotate(pygame.transform.scale(sldogimg, (ZOOM_FB, ZOOM_FB)),
@@ -306,6 +307,7 @@ def doeselementinlistexist(list,index):
     except:
         return False
 
+# searchstamp
 
 def changesettings(key,inhalt):
     for i in range(len(settingsall)):
@@ -326,6 +328,7 @@ def changesettings(key,inhalt):
     for i in range(len(settingsall)):
         settings.write(settingsall[i] + "\n")
     settings.close()
+# searchstamp
 
 def button(x,y,width,height,colorbox,colortext,font,text,action,size):
     global mouse,scrollverschiebung
@@ -341,6 +344,8 @@ def button(x,y,width,height,colorbox,colortext,font,text,action,size):
 
 startx = 0
 starty = 0
+# searchstamp
+
 def reset():
     global l,x,y,hearts,fish,feld,fat,geschw,startx,starty,holes,mice,dogs,whereru,howmanydogs,dogpos,dogrichtungen,savedas
     fat = 0
@@ -532,9 +537,10 @@ def scrolling():
     #down
     if scroll == 5:
         scrollverschiebung += 10
+# searchstamp
 
 def player():
-    global richtung,y,x,hearts,l,whereru,fat,geschw,inhole,mousevis,mice,lastposkitty,dogs,finaltime,mouse
+    global richtung,y,x,hearts,l,whereru,fat,geschw,inhole,mousevis,mice,lastposkitty,dogs,finaltime,mouse,whereru
     fastrichtung = 0
     anzahlrichtungen = 0
     key = pygame.key.get_pressed()
@@ -566,7 +572,7 @@ def player():
         mousevis = False
     else:
         mousevis = True
-    if legit and zoom and not inhole:
+    if legit and zoom and not inhole and whereru != "tut":
         if mousepoweractivated.gettime() < 45:
             screen.blit(pygame.transform.rotate(pygame.transform.scale(kitty, (
             (ZOOM_FB + fat * 3) * (mousepoweractivated.gettime() / 45), ZOOM_FB * (mousepoweractivated.gettime() / 45))),
@@ -639,6 +645,8 @@ dogsavinglist = ["richtung","anzahlrichtungen","fastrichtung","x","y"]
 dogsavingvariable = ""
 savingvariable = ""
 savinglist = ["l","x","y","hearts","fish","feld","fat","geschw","startx","starty","howmanydogs","holes","mice","dogs","dogpos","dogrichtungen"]
+# searchstamp
+
 def save(filename):
     global savinglist,savingvariable,mousepoweractivated,speedruntimer,dogshowtimer,savedas
     for i in savinglist:
@@ -673,6 +681,7 @@ def save(filename):
 
     file.close()
     savedas = filename
+# searchstamp
 
 def getsaved(filename):
     global savinglist,savedas
@@ -731,6 +740,7 @@ nameofworld = ""
 quitaction = ""
 tutstage = 0
 
+# searchstamp
 
 while True:
     global x,y
@@ -758,6 +768,7 @@ while True:
 
     screen.fill((color[0], color[1], color[2]))
 
+    # searchstamp
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -793,6 +804,7 @@ while True:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             scroll = event.button
+    # searchstamp
 
     if whereru == "main":
         pygame.mouse.set_visible(True)
@@ -824,6 +836,8 @@ while True:
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Tutorial",
                "global whereru;whereru = 'tut'", 80)
         asktosave = False
+    # searchstamp
+
     if whereru == "quit":
         pygame.mouse.set_visible(True)
         mousepoweractivated.pause()
@@ -840,6 +854,7 @@ while True:
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Cancel",
                "global whereru,lastwhereru;whereru = lastwhereru[-2];lastwhereru.pop(-1)", 70)
         asktosave = False
+    # searchstamp
 
     if whereru == "saveas":
         writething = pygame.font.SysFont(font, 150).render(nameofworld, True, (255 - color[0], 255 - color[1], 255 - color[2]))
@@ -848,6 +863,8 @@ while True:
         button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 5, pxl_width - 20, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Save & Quit",
                "global nameofworld;save(nameofworld+'.txt'); sys.exit()", 70)
+        # searchstamp
+
     if whereru == "saved":
         pygame.mouse.set_visible(True)
         mousepoweractivated.pause()
@@ -890,9 +907,10 @@ while True:
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Back",
                "global whereru,lastwhereru;whereru = lastwhereru[-2]", 80)
 
-
+    # searchstamp
 
     if whereru == "tut":
+        ZOOM_FB = min(pxl_width // 5, pxl_height // 5)
         pygame.mouse.set_visible(False)
         mousepoweractivated.pause()
         speedruntimer.pause()
@@ -906,7 +924,6 @@ while True:
             height = 7
             x,y = 3.5,3.5
             dogs = []
-            tutstage = 0.1
         FB = min(pxl_width // width, pxl_height // width)
         for j in range(len(l)):
             row_idx = (j // width) * FB + HohVer
@@ -925,6 +942,7 @@ while True:
             if pygame.key.get_pressed()[pygame.K_d] or pygame.key.get_pressed()[pygame.K_RIGHT] or pygame.key.get_pressed()[pygame.K_w] or pygame.key.get_pressed()[pygame.K_UP] or pygame.key.get_pressed()[pygame.K_a] or pygame.key.get_pressed()[pygame.K_LEFT] or pygame.key.get_pressed()[pygame.K_s] or pygame.key.get_pressed()[pygame.K_DOWN]:
                 tutstage += 0.001
 
+    # searchstamp
 
     if whereru == "play":
         speedruntimer.resume()
@@ -1265,7 +1283,7 @@ while True:
         for i in range(hearts + 1):
             screen.blit(pygame.transform.scale(heartimg, (FB // 2, FB // 2)), (pxl_width - i * (FB // 2 + 2), 0))
 
-
+    # searchstamp
     if whereru == "pause":
         pygame.mouse.set_visible(True)
         mousepoweractivated.pause()
