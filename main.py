@@ -18,7 +18,7 @@ import maze
 # searchstamp
 howmanydogs = 3
 showfps = True
-max_fps = 10000000000
+max_fps = 1000
 width = 15
 zoom = False
 height = 15
@@ -206,13 +206,12 @@ speedruntimer = timer()
 dogshowtimer = timer()
 mousepoweractivated = timer()
 
-def switchboolean(b):
-    global legit
-    #das ist nur weil if in execute blöd ist
-    if b:
-        return False
-    else:
-        return True
+
+def toggle_fullscreen():
+
+    pygame.display.toggle_fullscreen()
+
+
 
 def textures():
     global kitty,wall,heartimg,path,glowf,deadf,dogimg,dogsound,winsound,diesound,damagesound,holeimg,mouseimg,sldogimg
@@ -366,6 +365,8 @@ def reset():
 
     fish = []
     hearts = 7
+    speedruntimer.resume()
+    dogshowtimer.resume()
     speedruntimer.start()
     dogshowtimer.start()
     paths = 0
@@ -797,8 +798,7 @@ while True:
                 whereru = "deadscreen"
 
 
-            if event.key == pygame.K_LCTRL:
-                whereru = "main"
+
         if event.type == pygame.MOUSEBUTTONUP:
             mouse = event.button
 
@@ -825,7 +825,7 @@ while True:
                "sys.exit()", 80)
         button(pxl_width / 2 + 5, pxl_height - pxl_height / 2.5, pxl_width / 2 - 15, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Fullscreen",
-               "global screen;screen = pygame.display.set_mode((0,0),FULLSCREEN)", 80)
+               "toggle_fullscreen()", 80)
         button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 1.8, pxl_width - 20, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Settings",
                "global whereru,pausewru;whereru = 'pause';pausewru = 'settings'", 80)
@@ -862,7 +862,7 @@ while True:
                     ((pxl_width - writething.get_width()) // 2,(pxl_height - writething.get_height()) // 2))
         button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 5, pxl_width - 20, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Save & Quit",
-               "global nameofworld;save(nameofworld+'.txt'); sys.exit()", 70)
+               "global nameofworld,quitaction;save(nameofworld+'.labyrinth');exec(quitaction)", 70)
         # searchstamp
 
     if whereru == "saved":
@@ -874,19 +874,19 @@ while True:
 
 
         scrolling()
-        worldlist = [f for f in listdir("saves")]
+        worldlist = [f for f in listdir(os.path.join("saves"))]
         try:
             worldlist.remove(".DS_Store")
         except:
             pass
         for i in range(len(worldlist)):
-            worldlist[i] = worldlist[i][0:-4]
+            worldlist[i] = worldlist[i][0:-10]
         for i in range(len(worldlist)):
             if selectedworld == i:
                 button(5, i * (100 + 5) + scrollverschiebung, 500, 100,
                        (0,0,200), (color[0], color[1], color[2]), font,
                        worldlist[i],
-                       "global whereru; whereru = 'play'; getsaved(worldlist[selectedworld]+'.txt')", 50)
+                       "global whereru; whereru = 'play'; getsaved(worldlist[selectedworld]+'.labyrinth')", 50)
             else:
                 button(5, i * (100 + 5) + scrollverschiebung, 500, 100,
                        (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
@@ -899,13 +899,13 @@ while True:
         if selectedworld != -1:
             button(10, pxl_height - pxl_height / 2.5, (pxl_width - 30) / 2, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Delete",
-                   "global selectedworld, worldlist ;os.remove('saves/'+worldlist[selectedworld]+'.txt')", 80)
+                   "global selectedworld, worldlist ;os.remove('saves/'+worldlist[selectedworld]+'.labyrinth');selectedworld = -1", 80)
             button(20 + (pxl_width - 30) / 2, pxl_height - pxl_height / 2.5, (pxl_width - 30) / 2, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
-                   "Play", "global whereru; whereru = 'play'; getsaved(worldlist[selectedworld]+'.txt')", 80)
+                   "Play", "global whereru,selectedworld; whereru = 'play'; getsaved(worldlist[selectedworld]+'.labyrinth');selectedworld = -1", 80)
         button(pxl_width / 2 - 500 / 2, pxl_height - pxl_height / 5, 500, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Back",
-               "global whereru,lastwhereru;whereru = lastwhereru[-2]", 80)
+               "global whereru,selectedworld,lastwhereru;whereru = lastwhereru[-2];selectedworld = -1", 80)
 
     # searchstamp
 
@@ -1330,7 +1330,7 @@ while True:
             changesettings("zoom", str(zoom))
             button(20 + (pxl_width - 30) / 2, pxl_height - pxl_height / 2.5, (pxl_width - 30) / 2, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
-                   "Zoom: " + str(zoom), "global zoom;zoom = switchboolean(zoom)", 80)
+                   "Zoom: " + str(zoom), "global zoom;zoom = not zoom", 80)
             button(pxl_width / 2 - 500 / 2, pxl_height - pxl_height / 5, 500, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Done",
                    "global pausewru;pausewru = 'settings'", 80)
@@ -1339,11 +1339,11 @@ while True:
         if pausewru == "debug":
             button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 2, pxl_width - 20, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
-                   "Legit: " + " " + str(legit), "global legit; legit = switchboolean(legit)", 80)
+                   "Legit: " + " " + str(legit), "global legit; legit = not legit", 80)
             button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 2.9, pxl_width - 20, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
-                   "Show FPS: " + " " + str(showfps), "global showfps; showfps = switchboolean(showfps)", 80)
-            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Mousecontrol: "+str(mousecontrol),"global mousecontrol;mousecontrol = switchboolean(mousecontrol)",80)
+                   "Show FPS: " + " " + str(showfps), "global showfps; showfps = not showfps", 80)
+            button(pxl_width/2-(pxl_width-20)//2,pxl_height-pxl_height/1.15,pxl_width-20,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Mousecontrol: "+str(mousecontrol),"global mousecontrol;mousecontrol = not mousecontrol",80)
             changesettings("mousecontrol",str(mousecontrol))
             button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'settings'",80)
         if pausewru == "colors":
@@ -1428,7 +1428,7 @@ while True:
 
             button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 1.6, pxl_width - 20, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
-                   "Sounds: " + " " + str(sounds), "global sounds; sounds = switchboolean(sounds)", 100)
+                   "Sounds: " + " " + str(sounds), "global sounds; sounds = not sounds", 100)
             changesettings("sounds",str(sounds))
             button(pxl_width/2-500/2,pxl_height-pxl_height/5,500,100,(255-color[0],255-color[1],255-color[2]),(color[0],color[1],color[2]),font,"Done","global pausewru;pausewru = 'settings'",80)
 
