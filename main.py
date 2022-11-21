@@ -32,7 +32,7 @@ color = [0,0,0]
 font = ""
 texturepack = "default"
 texturepackslist = [f for f in listdir("texturepacks") if not isfile(join("texturepacks", f))]
-
+fulls = False
 
 
 settings = open("settings.txt","r")
@@ -208,8 +208,17 @@ mousepoweractivated = timer()
 
 
 def toggle_fullscreen():
+    global fulls, screen, old_pxl_width, old_pxl_height
+    if fulls:
 
-    pygame.display.toggle_fullscreen()
+        screen = pygame.display.set_mode((old_pxl_width, old_pxl_height), RESIZABLE)
+        fulls = not fulls
+    else:
+        old_pxl_width, old_pxl_height = pxl_width, pxl_height
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        fulls = not fulls
+
+
 
 
 
