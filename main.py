@@ -878,9 +878,8 @@ while True:
         speedruntimer.pause()
         dogshowtimer.pause()
         scrolling()
-        servers = ""
+        servers = []
         exec(open("servers.txt", "r").read())
-
 
         for i in range(len(servers)):
             if selectedworld == i:
@@ -899,7 +898,7 @@ while True:
         if selectedworld != -1:
             button(10, pxl_height - pxl_height / 1.85, (pxl_width - 30) / 2, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Delete",
-                   "global selectedworld, servers ;os.remove('saves/'+worldlist[selectedworld]+'.labyrinth');selectedworld = -1",
+                   "global selectedworld, servers; servers.pop(selectedworld);selectedworld = -1",
                    80)
             button(20 + (pxl_width - 30) / 2, pxl_height - pxl_height / 1.85, (pxl_width - 30) / 2, 100,
                    (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
@@ -911,9 +910,20 @@ while True:
                "global whereru,servername,serverip;whereru = 'addserver'; servername = ''; serverip = ''", 80)
         button(pxl_width / 2 - 500 / 2, pxl_height - pxl_height / 5, 500, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Back",
-               "global whereru,selectedworld,lastwhereru;whereru = lastwhereru[-2];selectedworld = -1", 80)
+               "global whereru,selectedworld;whereru = 'main';selectedworld = -1", 80)
+        stringthatwillbewritten = "["
+        for i in servers:
+            stringthatwillbewritten += "["
+            for j in i:
+                stringthatwillbewritten += "'"+j+"',"
+            stringthatwillbewritten += "],"
+
+
+        open("servers.txt", "w").write("servers = "+stringthatwillbewritten+"]")
 
     if whereru == "addserver":
+        exec(open("servers.txt", "r").read())
+
         if servername == "":
             writething = pygame.font.SysFont(font, 150).render('(Name)', True,
                                                             (color))
@@ -939,8 +949,17 @@ while True:
         button(20 + (pxl_width - 30) / 2, pxl_height - pxl_height / 5, (pxl_width - 30) / 2, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
                "Save",
-               "global whereru; whereru = 'addserver'",
+               "global whereru,servers; whereru = 'onlinescreen';servers.append([servername,serverip])",
                80)
+
+        stringthatwillbewritten = "["
+        for i in servers:
+            stringthatwillbewritten += "["
+            for j in i:
+                stringthatwillbewritten += "'" + j + "',"
+            stringthatwillbewritten += "],"
+
+        open("servers.txt", "w").write("servers = " + stringthatwillbewritten + "]")
 
 
     if whereru == "quit":
