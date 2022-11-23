@@ -749,6 +749,9 @@ whereru = "main"
 nameofworld = ""
 quitaction = ""
 tutstage = 0
+serverip = ""
+servername = ""
+selectedfieldserverip = False
 
 # searchstamp
 
@@ -791,7 +794,26 @@ while True:
             if whereru == "saveas":
                 nameofworld += event.unicode
                 if event.key == pygame.K_BACKSPACE:
-                    nameofworld = ""
+                    nameofworld = nameofworld[:-2]
+
+            if whereru == "addserver":
+                if selectedfieldserverip:
+                    serverip += event.unicode
+                    if event.key == pygame.K_BACKSPACE:
+                        serverip = serverip[:-2]
+
+                else:
+                    servername += event.unicode
+                    if event.key == pygame.K_BACKSPACE:
+                        servername = servername[:-2]
+                if event.key == pygame.K_TAB or event.key == pygame.K_RETURN:
+                    if selectedfieldserverip:
+                        serverip = serverip[:-1]
+                    else:
+                        servername = servername[:-1]
+
+                    selectedfieldserverip = not selectedfieldserverip
+
             if event.key == pygame.K_r:
                 reset()
             if event.key == pygame.K_ESCAPE and (whereru == "play" or whereru == "tut") and timebetweenpauseandplay > 10:
@@ -826,9 +848,12 @@ while True:
         button(pxl_width / 2 + 5, pxl_height - pxl_height / 1.4, pxl_width / 2 - 15, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Play Saved",
                "global whereru;whereru = 'saved'", 80)
-        button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 1.15, pxl_width - 20, 100,
-               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Create",
+        button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 1.15, pxl_width / 2 - 15, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Create a server",
                "webbrowser.open(r'https://e2z1.ml/projects/KittyLabyrinth')", 80)
+        button(pxl_width / 2 + 5, pxl_height - pxl_height / 1.15, pxl_width / 2 - 15, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Play online",
+               "global whereru;whereru = 'onlinescreen'", 80)
         button(10, pxl_height - pxl_height / 2.5, pxl_width / 2 - 15, 100,
                (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Exit",
                "sys.exit()", 80)
@@ -846,6 +871,77 @@ while True:
                "global whereru;whereru = 'tut'", 80)
         asktosave = False
     # searchstamp
+
+    if whereru == "onlinescreen":
+        pygame.mouse.set_visible(True)
+        mousepoweractivated.pause()
+        speedruntimer.pause()
+        dogshowtimer.pause()
+        scrolling()
+        servers = ""
+        exec(open("servers.txt", "r").read())
+
+
+        for i in range(len(servers)):
+            if selectedworld == i:
+                button(5, i * (100 + 5) + scrollverschiebung, 500, 100,
+                       (0, 0, 200), (color[0], color[1], color[2]), font,
+                       servers[i][0],
+                       "global whereru; whereru = 'serverplay'", 50)
+            else:
+                button(5, i * (100 + 5) + scrollverschiebung, 500, 100,
+                       (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+                       servers[i][0],
+                       "global selectedworld; selectedworld = i", 50)
+
+        pygame.draw.rect(screen, color, (
+            0, pxl_height - pxl_height / 1.85 - 5, pxl_width, pxl_height - (pxl_height - pxl_height / 2.5 - 5)))
+        if selectedworld != -1:
+            button(10, pxl_height - pxl_height / 1.85, (pxl_width - 30) / 2, 100,
+                   (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Delete",
+                   "global selectedworld, servers ;os.remove('saves/'+worldlist[selectedworld]+'.labyrinth');selectedworld = -1",
+                   80)
+            button(20 + (pxl_width - 30) / 2, pxl_height - pxl_height / 1.85, (pxl_width - 30) / 2, 100,
+                   (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+                   "Edit",
+                   "global whereru,servername,serverip;whereru = 'addserver';servername = servers[i][0];serverip = servers[i][1]",
+                   80)
+        button(10, pxl_height - pxl_height / 2.5, pxl_width - 20, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Add",
+               "global whereru,servername,serverip;whereru = 'addserver'; servername = ''; serverip = ''", 80)
+        button(pxl_width / 2 - 500 / 2, pxl_height - pxl_height / 5, 500, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Back",
+               "global whereru,selectedworld,lastwhereru;whereru = lastwhereru[-2];selectedworld = -1", 80)
+
+    if whereru == "addserver":
+        if servername == "":
+            writething = pygame.font.SysFont(font, 150).render('(Name)', True,
+                                                            (color))
+        else:
+            writething = pygame.font.SysFont(font, 150).render(servername, True,
+                                                            (color))
+        if serverip == "":
+            writething1 = pygame.font.SysFont(font, 150).render('(IP)', True,
+                                                               (color))
+        else:
+            writething1 = pygame.font.SysFont(font, 150).render(serverip, True,
+                                                               (color))
+        pygame.draw.rect(screen, (255 - color[0], 255 - color[1], 255 - color[2]), ((pxl_width - writething.get_width()) // 2-5, (pxl_height - writething.get_height()) // 5-5, writething.get_width()+10, writething.get_height()+10))
+        screen.blit(writething,
+                    ((pxl_width - writething.get_width()) // 2, (pxl_height - writething.get_height()) // 5))
+        pygame.draw.rect(screen, (255 - color[0], 255 - color[1], 255 - color[2]), ((pxl_width - writething1.get_width()) // 2-5, (pxl_height - writething1.get_height()) // 2-5, writething1.get_width()+10, writething1.get_height()+10))
+        screen.blit(writething1,
+                    ((pxl_width - writething1.get_width()) // 2, (pxl_height - writething1.get_height()) // 2))
+        button(10, pxl_height - pxl_height / 5, (pxl_width - 30) / 2, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font, "Cancel",
+               "global whereru; whereru = 'onlinescreen'",
+               80)
+        button(20 + (pxl_width - 30) / 2, pxl_height - pxl_height / 5, (pxl_width - 30) / 2, 100,
+               (255 - color[0], 255 - color[1], 255 - color[2]), (color[0], color[1], color[2]), font,
+               "Save",
+               "global whereru; whereru = 'addserver'",
+               80)
+
 
     if whereru == "quit":
         pygame.mouse.set_visible(True)
@@ -867,6 +963,7 @@ while True:
 
     if whereru == "saveas":
         writething = pygame.font.SysFont(font, 150).render(nameofworld, True, (255 - color[0], 255 - color[1], 255 - color[2]))
+        pygame.draw.rect(screen, (255 - color[0], 255 - color[1], 255 - color[2]), ((pxl_width - writething.get_width()) // 2-5, (pxl_height - writething.get_height()) // 5-5, writething.get_width()+10, writething.get_height()+10))
         screen.blit(writething,
                     ((pxl_width - writething.get_width()) // 2,(pxl_height - writething.get_height()) // 2))
         button(pxl_width / 2 - (pxl_width - 20) // 2, pxl_height - pxl_height / 5, pxl_width - 20, 100,
@@ -879,7 +976,6 @@ while True:
         mousepoweractivated.pause()
         speedruntimer.pause()
         dogshowtimer.pause()
-        scrolling()
 
 
         scrolling()
