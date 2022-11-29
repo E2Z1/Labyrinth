@@ -7,3 +7,4 @@ volume = 1.0011811023622048
 sounds = True
 mousecontrol = False
 zoom = True
+name = 'E2Z1'
